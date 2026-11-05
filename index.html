@@ -50,6 +50,12 @@ a{color:var(--verde-700)}
 .inp,select.inp,textarea.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;outline:none}
 .inp:focus{border-color:var(--verde);box-shadow:0 0 0 3px rgba(29,157,111,.15)}
 textarea.inp{resize:vertical;min-height:70px;line-height:1.45}
+.pw{position:relative}
+.pw .inp{padding-right:42px}
+.pw .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.pw .eye:hover{background:var(--line2);color:var(--ink)}
+.pw .eye svg{width:18px;height:18px}
+.pw .eye.on{color:var(--verde)}
 label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:10px 0 5px}
 .hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
@@ -328,11 +334,11 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
       <h1>Ingresar al panel</h1>
       <div class="sub">Usá el email y la contraseña que te asignaron.</div>
       <label class="lbl" for="l-email">Email</label><input class="inp" id="l-email" type="email" autocomplete="username" required>
-      <label class="lbl" for="l-pass">Contraseña</label><input class="inp" id="l-pass" type="password" autocomplete="current-password" required>
+      <label class="lbl" for="l-pass">Contraseña</label><div class="pw"><input class="inp" id="l-pass" type="password" autocomplete="current-password" required><button type="button" class="eye" onclick="ojo('l-pass',this)" title="Mostrar u ocultar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
       <div style="height:14px"></div>
       <button class="btn full" id="l-btn" type="submit">Ingresar</button>
       <div id="l-err" style="color:var(--err);font-size:12.5px;margin-top:12px;min-height:16px;text-align:center"></div>
-      <div id="l-demo" class="alert info hidden">Modo demostración: el panel no está conectado a Supabase. Entrá con cualquier email para recorrerlo con datos de ejemplo.</div>
+      <div id="l-demo" class="alert info hidden">Modo demostración: el panel no está conectado a Supabase. Entrá con cualquier email para recorrerlo con datos de ejemplo. Si el email tiene la palabra <b>vendedor</b>, ves la vista de vendedor.</div>
       <a class="powered" href="https://waia.ar" target="_blank" rel="noopener"><span>Desarrollado por</span><span class="waia-logo"><img alt="WAIA" src="data:image/png;base64,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"></span></a>
     </form>
   </div>
@@ -346,7 +352,7 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
     <button class="tab" data-v="pedidos" onclick="go('pedidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Altas</button>
     <button class="tab" data-v="contactos" onclick="go('contactos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Contactos</button>
     <button class="tab adm" data-v="metricas" onclick="go('metricas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></svg>Métricas</button>
-    <button class="tab" data-v="config" onclick="go('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Configurar</button>
+    <button class="tab" data-v="config" onclick="go('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span id="cfg-lbl">Configurar</span></button>
     <div class="foot">
       <span class="avatar" id="me-av" title="Mi cuenta" onclick="go('config');cfgPane('cuenta')" style="cursor:pointer"></span>
       <button class="tab" onclick="logout()" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Salir</button>
@@ -393,7 +399,7 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
             <option value="conflicto">Ya usados</option><option value="rechazado">Rechazados</option><option value="error">Con error</option>
           </select>
           <span class="grow"></span>
-          <button class="btn ghost sm" onclick="exportPedidos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
+          <button class="btn ghost sm adm" onclick="exportPedidos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
         </div>
         <div class="card" style="padding:0;overflow:auto"><table class="tbl" id="ptbl"></table></div>
         <div class="hint">Cada enlace es personal y vence a las 24 horas. El panel no muestra el enlace: para reenviarlo, abrí la conversación y usá "Generar enlace" en la ficha (si los datos no cambiaron, FielPet devuelve el mismo).</div>
@@ -408,7 +414,7 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
             <option value="listo_para_cerrar">Listo para cerrar</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option><option value="perdido">Perdido</option>
           </select>
           <span class="grow"></span>
-          <button class="btn ghost sm" onclick="exportContactos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
+          <button class="btn ghost sm adm" onclick="exportContactos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
         </div>
         <div class="card" style="padding:0;overflow:auto"><table class="tbl" id="ctbl"></table></div>
       </div></div></section>
@@ -522,7 +528,7 @@ function demoDb() {
   const match = (r, eq) => Object.entries(eq || {}).every(([k, x]) => r[k] === x);
   const IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220"><rect width="320" height="220" fill="#F4F6F5"/><rect x="24" y="24" width="272" height="172" rx="8" fill="#fff" stroke="#E3E8E6"/><text x="44" y="64" font-family="Arial" font-size="18" font-weight="bold" fill="#1D9D6F">Veterinaria San Roque</text><text x="44" y="96" font-family="Arial" font-size="13" fill="#444">Factura B · 0003-00012345</text><text x="44" y="122" font-family="Arial" font-size="13" fill="#444">Consulta clínica · Luna</text><text x="44" y="160" font-family="Arial" font-size="20" font-weight="bold" fill="#1F2624">$ 38.500</text></svg>');
   return {
-    async login() {}, async session() { return window._demoS || null; }, async logout() { window._demoS = null; },
+    async login(email) { if (/vendedor/i.test(email || '')) Object.assign(yo, { rol: 'vendedor', nombre_visible: 'Vendedor demo' }); }, async session() { return window._demoS || null; }, async logout() { window._demoS = null; },
     async rpc(fn, a = {}) {
       window._demoS = true;
       const c = conv(a.p_wa_id);
@@ -608,6 +614,8 @@ const I = {
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
   reply: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17l-5-5 5-5M4 12h11a5 5 0 0 1 5 5v2"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeoff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.9 17.9A10.1 10.1 0 0 1 12 20c-7 0-11-8-11-8a18.4 18.4 0 0 1 5.1-5.9M9.9 4.2A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2M1 1l22 22"/></svg>',
   pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
 };
 
@@ -686,6 +694,9 @@ async function start() {
   $('me-av').textContent = iniciales(nombre); $('me-av').style.background = colorDe(ME.email);
   $('me-name').textContent = nombre + (esAdmin() ? ' · admin' : '');
   document.querySelectorAll('.adm').forEach((x) => x.classList.toggle('hidden', !esAdmin()));
+  document.body.classList.toggle('rol-vendedor', !esAdmin());
+  $('cfg-lbl').textContent = esAdmin() ? 'Configurar' : 'Mi cuenta';
+  TITLES.config = esAdmin() ? ['Configuración', 'El bot, los horarios, los precios, el conocimiento y el equipo'] : ['Mi cuenta', 'Tus datos, tu contraseña y tus respuestas rápidas'];
   await loadBase();
   await loadConvs();
   loadNotifs();
@@ -702,7 +713,7 @@ async function loadBase() {
 }
 function botPill() { const on = CFG.bot_activo !== 'false'; const p = $('botpill'); p.className = 'pill ' + (on ? 'on' : 'off'); p.innerHTML = '<span class="dot"></span>' + (on ? 'Bot activo' : 'Bot apagado'); }
 
-const TITLES = { inbox: ['Bandeja', 'Todo lo que llega al WhatsApp de FielPet'], pedidos: ['Altas', 'Enlaces de alta generados por el bot y por el equipo'],
+let TITLES = { inbox: ['Bandeja', 'Todo lo que llega al WhatsApp de FielPet'], pedidos: ['Altas', 'Enlaces de alta generados por el bot y por el equipo'],
   contactos: ['Contactos', 'Personas que escribieron y sus mascotas'], metricas: ['Métricas', 'Cuánta gente escribe, cuándo y cómo termina'],
   config: ['Configuración', 'El bot, los horarios, los precios, el conocimiento y el equipo'] };
 function go(v) {
@@ -720,6 +731,8 @@ function go(v) {
 // =====================================================================
 //  Utilidades
 // =====================================================================
+function ojo(id, btn) { const i = $(id); const ver = i.type === 'password'; i.type = ver ? 'text' : 'password'; btn.innerHTML = ver ? I.eyeoff : I.eye; btn.classList.toggle('on', ver); }
+const campoPass = (id, ac) => `<div class="pw"><input class="inp" type="password" id="${id}" autocomplete="${ac || 'new-password'}"><button type="button" class="eye" onclick="ojo('${id}',this)" title="Mostrar u ocultar">${I.eye}</button></div>`;
 function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = err ? 'err' : ''; clearTimeout(t._t); t._t = setTimeout(() => t.classList.add('hidden'), 3800); }
 const ERRORES = { no_autorizado: 'Tu sesión venció. Volvé a ingresar.', no_es_tuya: 'Primero tomá la conversación.', tomada: 'La conversación la tiene otra persona.',
   ventana_cerrada: 'Pasaron más de 24 h desde el último mensaje del cliente: solo se puede enviar una plantilla.', vacio: 'El mensaje está vacío.',
@@ -1137,7 +1150,7 @@ function pintarPlantilla(prefill) {
   const p = PLANTILLAS[$('t-sel').value]; if (!p) return;
   const n = p.variables;
   const c = cur(); const nombre = prefill && prefill.nombre !== undefined ? prefill.nombre : (c ? String(c.nombre || c.nombre_wa || '').split(' ')[0] : '');
-  const def = (i) => (i === 0 ? nombre : i === 1 && c ? new Date(c.ultimo_cliente_at || c.ultimo_msg_at || Date.now()).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }) : '');
+  const def = (i) => (i === 0 ? nombre : i === 1 && c && !prefill ? new Date(c.ultimo_cliente_at || c.ultimo_msg_at || Date.now()).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }) : '');
   $('t-vars').innerHTML = n ? Array.from({ length: n }, (_, i) => `<label class="lbl">Variable {{${i + 1}}}</label><input class="inp tv" value="${esc(def(i))}" oninput="previewPlantilla()">`).join('') : '';
   previewPlantilla();
 }
@@ -1459,7 +1472,7 @@ function renderConfig() {
   $('cfgpanes').innerHTML = '<div class="muted">Cargando…</div>';
   (CFGP[PANE] || (() => ''))();
 }
-function cfgPane(p) { PANE = p; if (!document.getElementById('v-config').classList.contains('active')) go('config'); else renderConfig(); }
+function cfgPane(p) { const x = PANES.find((y) => y[0] === p); if (x && x[2] && !esAdmin()) p = 'cuenta'; PANE = p; if (!document.getElementById('v-config').classList.contains('active')) go('config'); else renderConfig(); }
 const cv = (k, d = '') => esc(CFG[k] ?? d);
 const tgl = (id, on) => `<label class="toggle"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}><span></span></label>`;
 async function guardarCfg(pares) {
@@ -1554,9 +1567,10 @@ const CFGP = {
     $('cfgpanes').innerHTML = `<div class="card"><h3>Plantillas de WhatsApp</h3><div class="desc">Se crean y aprueban en Meta → WhatsApp Manager → Plantillas de mensajes. Acá se ven las de la cuenta de FielPet; solo las aprobadas se pueden enviar.</div>
       ${r && r.ok ? '' : `<div class="alert warn">${esc(errTxt(r && r.error))}</div>`}
       ${l.map((p) => `<div class="tplcard"><div class="row"><b class="grow">${esc(p.nombre)}</b><span class="chip">${esc(p.categoria)}</span><span class="chip">${esc(p.idioma)}</span><span class="chip ${(EST[p.estado] || ['', ''])[1]}">${esc((EST[p.estado] || [p.estado])[0])}</span></div><pre>${esc(p.texto)}${p.botones && p.botones.length ? '\n\n[ ' + p.botones.map(esc).join(' ]  [ ') + ' ]' : ''}</pre></div>`).join('') || '<div class="muted">No hay plantillas en la cuenta.</div>'}</div>
-      <div class="card"><h3>Plantillas sugeridas para crear</h3><div class="desc">Categoría Utilidad, idioma Español (ARG).</div>
+      ${esAdmin() ? `<div class="card"><h3>Plantillas sugeridas para crear</h3><div class="desc">Categoría Utilidad, idioma Español (ARG).</div>
       <div class="tplcard"><b>fielpet_retomar_consulta</b><pre>Hola {{1}}, te escribimos de FielPet por tu consulta del {{2}}. ¿Seguimos por acá?</pre></div>
-      <div class="tplcard"><b>fielpet_enlace_vencido</b> · botones de respuesta rápida "Sí, generar otro" y "Ahora no"<pre>Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.</pre></div></div>`;
+      <div class="tplcard"><b>fielpet_enlace_vencido</b> · botones de respuesta rápida "Sí, generar otro" y "Ahora no"<pre>Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.</pre></div>
+      <div class="tplcard"><b>fielpet_primer_contacto</b> · para "Nueva conversación"<pre>Hola {{1}}, te escribimos de FielPet por la consulta que hiciste sobre la cobertura para tu mascota. ¿Te podemos ayudar por acá?</pre></div></div>` : ''}`;
   },
   integracion() {
     $('cfgpanes').innerHTML = `<div class="card"><h3>Integración con FielPet</h3><div class="desc">A qué servidor de FielPet se mandan las altas. Para pasar a producción hay que cambiar estas dos cosas acá <b>y</b> la credencial "FielPet · API key" en n8n, y después correr "Cargar ahora" en el workflow de catálogos (los ids de planes y localidades cambian por entorno).</div>
@@ -1574,9 +1588,9 @@ const CFGP = {
         <td>${tgl('', x.activo).replace('id=""', `class="u-a" data-e="${esc(x.email)}"`)}</td><td><button class="btn sm" onclick="guardarUsuario('${esc(x.email)}')">Guardar</button></td></tr>`).join('')}</table></div>`;
   },
   cuenta() {
-    $('cfgpanes').innerHTML = `<div class="card"><h3>Mi cuenta</h3><div class="desc">${esc(ME.email)} · ${esAdmin() ? 'Administrador' : 'Vendedor'}</div>
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Mi cuenta</h3><div class="desc">${esc(ME.email)} · ${esAdmin() ? 'Administrador' : 'Vendedor'}${esAdmin() ? '' : '. Los datos de otros usuarios los administra un administrador.'}</div>
       <label class="lbl">Nombre que ven los clientes</label><div class="row"><input class="inp" id="a-n" value="${esc(ME.nombre_visible || ME.nombre || '')}"><button class="btn" onclick="guardarNombre()">Guardar</button></div><div class="hint">Se usa en el mensaje al tomar una conversación.</div></div>
-      <div class="card"><h3>Cambiar contraseña</h3><div class="desc">Mínimo 8 caracteres.</div><div class="grid2"><div><label class="lbl">Nueva contraseña</label><input class="inp" type="password" id="a-p1"></div><div><label class="lbl">Repetila</label><input class="inp" type="password" id="a-p2"></div></div>
+      <div class="card"><h3>Cambiar contraseña</h3><div class="desc">Mínimo 8 caracteres.</div><div class="grid2"><div><label class="lbl">Nueva contraseña</label>${campoPass('a-p1')}</div><div><label class="lbl">Repetila</label>${campoPass('a-p2')}</div></div>
       <div class="savebar"><button class="btn" onclick="cambiarPass()">Cambiar contraseña</button></div></div>
       ${esAdmin() ? '' : `<div class="card"><h3>Avisos en este navegador</h3><div class="switchrow"><span>Sonido cuando llega un aviso</span>${tgl('m-son', ls('sonido') !== 'no')}</div><div class="switchrow"><span>Notificación del navegador</span>${tgl('m-not', ls('notif') === 'si')}</div><div class="savebar"><button class="btn" onclick="guardarAvisosNav()">Guardar</button></div></div>`}`;
   },
@@ -1616,9 +1630,10 @@ async function agregarRapida() {
 }
 async function borrarRapida(id) { try { await db.del('fielpet_respuestas_rapidas', { id }); RAPIDAS = RAPIDAS.filter((r) => r.id !== id); CFGP.rapidas(); } catch (e) { toast(e.message, true); } }
 function openUsuario() {
+  if (!esAdmin()) return toast(errTxt('solo_admin'), true);
   modal(`<h3>Agregar usuario</h3><div class="desc">Se crea el acceso con una contraseña temporal; la persona la puede cambiar en "Mi cuenta".</div>
     <div class="grid2"><div><label class="lbl">Email</label><input class="inp" id="nu-e" type="email"></div><div><label class="lbl">Nombre</label><input class="inp" id="nu-n"></div>
-    <div><label class="lbl">Rol</label><select class="inp" id="nu-r"><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select></div><div><label class="lbl">Contraseña temporal</label><input class="inp" id="nu-p" value="${Math.random().toString(36).slice(2, 8)}Fp!${Math.floor(Math.random() * 90 + 10)}"></div></div>
+    <div><label class="lbl">Rol</label><select class="inp" id="nu-r"><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select></div><div><label class="lbl">Contraseña temporal</label><input class="inp" id="nu-p" autocomplete="off" value="${Math.random().toString(36).slice(2, 8)}Fp!${Math.floor(Math.random() * 90 + 10)}"></div></div>
     <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="nu-ok">Crear</button></div>`,
   () => ($('nu-ok').onclick = async () => {
     $('nu-ok').disabled = true;
@@ -1628,6 +1643,7 @@ function openUsuario() {
   }));
 }
 async function guardarUsuario(email) {
+  if (!esAdmin()) return toast(errTxt('solo_admin'), true);
   const q = (c) => [...document.querySelectorAll(c)].find((x) => x.dataset.e === email);
   if (email.toLowerCase() === ME.email.toLowerCase() && (!q('.u-a').checked || q('.u-r').value !== 'admin')) return toast('No podés quitarte el acceso de administrador a vos mismo.', true);
   try { await db.upd('fielpet_usuarios', { email }, { nombre_visible: q('.u-n').value.trim() || null, rol: q('.u-r').value, activo: q('.u-a').checked }); toast('Usuario guardado.'); TEAM = await db.rpc('fielpet_equipo').catch(() => TEAM); }
