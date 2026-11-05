@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FielPet · Panel de conversaciones</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%231D9D6F%22><ellipse cx=%226%22 cy=%229.5%22 rx=%222.1%22 ry=%222.7%22/><ellipse cx=%2210%22 cy=%225.8%22 rx=%222.1%22 ry=%222.7%22/><ellipse cx=%2214.2%22 cy=%225.8%22 rx=%222.1%22 ry=%222.7%22/><ellipse cx=%2218%22 cy=%229.5%22 rx=%222.1%22 ry=%222.7%22/><path d=%22M12 11c-3.2 0-6.2 3.6-6.2 6.3 0 1.9 1.4 2.9 3.1 2.9 1.2 0 2-.6 3.1-.6s1.9.6 3.1.6c1.7 0 3.1-1 3.1-2.9 0-2.7-3-6.3-6.2-6.3z%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/opus-recorder@8.0.5/dist/recorder.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@breezystack/lamejs@1.2.7/dist/lamejs.iife.js"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --verde:#1D9D6F; --verde-700:#167A57; --verde-900:#0F5A40; --verde-claro:#9BD7B8; --verde-bg:#E7F5F0;
+  --ink:#1F2624; --body:#444; --muted:#7D8783; --line:#E3E8E6; --line2:#EEF2F0; --bg:#F4F6F5; --card:#fff;
+  --chatbg:#EFEAE2; --in:#FFFFFF; --out:#D9FDD3; --bot:#F1F5F3; --sys:#FFF6D6;
+  --ok:#1E8A55; --ok-bg:#E2F3E9; --warn:#8A6300; --warn-bg:#FFF2D2; --err:#B93A32; --err-bg:#FBE7E5; --info:#2F5E8A; --info-bg:#E6EEF7;
+  --read:#34B7F1;
+  --sh-sm:0 1px 2px rgba(0,0,0,.06); --sh:0 8px 28px rgba(0,0,0,.10); --sh-lg:0 20px 60px rgba(0,0,0,.25);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased;overflow:hidden}
+h1,h2,h3,.brand{font-family:Montserrat,Inter,sans-serif}
+button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
+input,textarea,select{font:inherit;color:var(--ink)}
+a{color:var(--verde-700)}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.caps{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;font-weight:700;color:var(--muted)}
+.grow{flex:1;min-width:0}
+.row{display:flex;align-items:center;gap:8px}
+.wrap{flex-wrap:wrap}
+
+/* ---------- botones y campos ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--verde);color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px;transition:background .15s;white-space:nowrap}
+.btn:hover{background:var(--verde-700)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--line2)}
+.btn.danger{background:var(--err)}
+.btn.full{width:100%}
+.btn svg,.ibtn svg{width:16px;height:16px}
+.ibtn{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+.ibtn:hover{background:var(--line2);color:var(--ink)}
+.ibtn.on{color:var(--err)}
+.inp,select.inp,textarea.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;outline:none}
+.inp:focus{border-color:var(--verde);box-shadow:0 0 0 3px rgba(29,157,111,.15)}
+textarea.inp{resize:vertical;min-height:70px;line-height:1.45}
+label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:10px 0 5px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+.toggle{position:relative;width:40px;height:22px;flex:none}
+.toggle input{opacity:0;width:0;height:0}
+.toggle span{position:absolute;inset:0;background:#cfd6d3;border-radius:22px;transition:.15s}
+.toggle span:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s;box-shadow:var(--sh-sm)}
+.toggle input:checked+span{background:var(--verde)}
+.toggle input:checked+span:before{transform:translateX(18px)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;background:var(--line2);color:var(--body);white-space:nowrap}
+.chip.bot{background:var(--verde-bg);color:var(--verde-900)}
+.chip.esp{background:var(--warn-bg);color:var(--warn)}
+.chip.mine{background:var(--info-bg);color:var(--info)}
+.chip.other{background:#EEE8F7;color:#5B3F8A}
+.chip.closed{background:var(--line2);color:var(--muted)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.err{background:var(--err-bg);color:var(--err)}
+.chip .x{cursor:pointer;opacity:.6;margin-left:2px}
+.pill{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:20px;padding:5px 10px}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.on{background:var(--ok-bg);color:var(--ok)}
+.pill.off{background:var(--err-bg);color:var(--err)}
+.pill.demo{background:var(--warn-bg);color:var(--warn)}
+
+/* ---------- login ---------- */
+#login{position:fixed;inset:0;z-index:200;display:grid;grid-template-columns:1.1fr 1fr;background:#fff}
+.lg-left{background:linear-gradient(150deg,var(--verde) 0%,var(--verde-900) 100%);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:48px;position:relative;overflow:hidden}
+.lg-left:after{content:'';position:absolute;right:-120px;bottom:-120px;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.07)}
+.lg-left h2{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.1;max-width:460px}
+.lg-left h2 em{font-style:normal;color:var(--verde-claro)}
+.lg-left p{color:rgba(255,255,255,.75);font-size:15px;max-width:420px;margin-top:14px;line-height:1.55}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.01em}
+.brand .paw{width:34px;height:34px;border-radius:10px;background:#fff;color:var(--verde);display:flex;align-items:center;justify-content:center}
+.brand .paw svg{width:22px;height:22px}
+.lg-right{display:flex;align-items:center;justify-content:center;padding:32px}
+.lg-card{width:360px;max-width:100%}
+.lg-card h1{font-size:24px;font-weight:800;margin-bottom:4px}
+.lg-card .sub{color:var(--muted);margin-bottom:22px}
+.powered{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;color:var(--muted);margin-top:28px;text-decoration:none}
+.waia-logo{display:inline-flex;align-items:center;background:#0B0B0C;border-radius:9px;padding:7px 11px}
+.waia-logo img{height:16px;display:block}
+
+/* ---------- estructura ---------- */
+.shell{display:flex;height:100vh}
+.rail{width:78px;background:var(--verde-900);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px;flex:none}
+.rail .lg{width:44px;height:44px;border-radius:12px;background:#fff;color:var(--verde);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.rail .lg svg{width:26px;height:26px}
+.tab{position:relative;width:66px;border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.7)}
+.tab svg{width:20px;height:20px}
+.tab:hover{background:rgba(255,255,255,.08);color:#fff}
+.tab.active{background:rgba(255,255,255,.16);color:#fff}
+.tab .badge{position:absolute;top:4px;right:10px;background:#FF5A4E;color:#fff;font-size:10px;border-radius:10px;padding:1px 5px;min-width:16px}
+.rail .foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px}
+.avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex:none;background:var(--verde)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+.topbar{height:60px;flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.topbar h1{font-size:17px;font-weight:700}
+.topbar .sub{font-size:12px;color:var(--muted)}
+.topbar .right{display:flex;align-items:center;gap:10px}
+.content{flex:1;min-height:0;position:relative}
+.view{display:none;height:100%}
+.view.active{display:block}
+.scroll{height:100%;overflow:auto}
+.pad{padding:22px;max-width:1240px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.card .desc{color:var(--muted);font-size:12.5px;margin-bottom:12px;line-height:1.5}
+
+/* ---------- notificaciones ---------- */
+.bell{position:relative}
+.bdot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:#FF5A4E;border:2px solid #fff}
+.notif{position:absolute;right:0;top:44px;width:360px;max-height:460px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);z-index:50}
+.notif .nh{padding:12px 14px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.nitem{padding:10px 14px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13px;line-height:1.4}
+.nitem:hover{background:var(--bg)}
+.nitem.new{background:var(--verde-bg)}
+.nitem .t{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ---------- bandeja ---------- */
+.inbox{display:flex;height:100%}
+.list{width:360px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column}
+.lh{padding:12px;border-bottom:1px solid var(--line2)}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:0 10px}
+.search svg{width:16px;height:16px;color:var(--muted);flex:none}
+.search input{border:0;background:none;outline:none;padding:9px 0;width:100%}
+.filt{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.filt button{font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--bg);color:var(--body)}
+.filt button.on{background:var(--verde-bg);color:var(--verde-900)}
+.filt b{font-weight:700;opacity:.65;margin-left:2px}
+.convs{flex:1;overflow:auto}
+.conv{display:flex;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line2);cursor:pointer;align-items:center}
+.conv:hover{background:var(--bg)}
+.conv.sel{background:#EBF1EF}
+.conv.esp{box-shadow:inset 3px 0 0 #F2A51B}
+.conv .meta{flex:1;min-width:0}
+.conv .l1{display:flex;justify-content:space-between;gap:8px}
+.conv .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv .tm{font-size:11px;color:var(--muted);flex:none}
+.conv.unread .tm{color:var(--verde);font-weight:700}
+.conv .l2{display:flex;justify-content:space-between;gap:8px;margin-top:3px;align-items:center}
+.conv .pv{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv .cnt{background:var(--verde);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;flex:none}
+.conv .l3{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+
+.chat{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--chatbg)}
+.empty-chat{margin:auto;text-align:center;color:var(--muted);line-height:1.7}
+.ch{height:62px;flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 14px}
+.ch .who{flex:1;min-width:0}
+.ch .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch .who span{font-size:12px;color:var(--muted)}
+.win{font-size:12px;padding:6px 14px;background:var(--warn-bg);color:var(--warn);display:flex;align-items:center;gap:8px;flex:none}
+.win.ok{background:var(--verde-bg);color:var(--verde-900)}
+.msgs{flex:1;overflow:auto;padding:16px 6% 10px;display:flex;flex-direction:column;gap:3px;
+  background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px);background-size:18px 18px}
+.day{align-self:center;background:#fff;color:var(--muted);font-size:11.5px;font-weight:600;border-radius:8px;padding:4px 10px;margin:10px 0 6px;box-shadow:var(--sh-sm)}
+.sys{align-self:center;background:var(--sys);color:#6B5A1E;font-size:12px;border-radius:8px;padding:5px 10px;margin:6px 0;max-width:80%;text-align:center}
+.m{max-width:68%;border-radius:9px;padding:6px 9px 4px;box-shadow:var(--sh-sm);position:relative;line-height:1.42;word-wrap:break-word;white-space:pre-wrap}
+.m.in{align-self:flex-start;background:var(--in);border-top-left-radius:2px}
+.m.out{align-self:flex-end;background:var(--out);border-top-right-radius:2px}
+.m.botm{align-self:flex-end;background:var(--bot);border-top-right-radius:2px}
+.m .who{font-size:11px;font-weight:700;margin-bottom:2px;color:var(--verde-700)}
+.m.botm .who{color:var(--muted)}
+.m .ft{display:flex;justify-content:flex-end;align-items:center;gap:3px;font-size:10.5px;color:var(--muted);margin-top:2px;white-space:nowrap}
+.m .ft svg{width:16px;height:11px}
+.m .ft .rd{color:var(--read)}
+.m .ft .fail{color:var(--err);font-weight:700}
+.m .err{font-size:11.5px;color:var(--err);margin-top:4px}
+.m img.im{display:block;max-width:300px;max-height:320px;border-radius:7px;cursor:zoom-in;margin-bottom:3px}
+.m img.st{width:140px;height:140px;object-fit:contain;display:block}
+.m.sticker{background:none;box-shadow:none}
+.m video{display:block;max-width:300px;max-height:320px;border-radius:7px;margin-bottom:3px}
+.m audio{display:block;width:260px;height:36px;margin:2px 0}
+.m .trans{font-size:12.5px;color:var(--body);font-style:italic;margin-top:4px;border-left:3px solid var(--verde-claro);padding-left:7px}
+.m .doc{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.04);border-radius:8px;padding:9px 10px;text-decoration:none;color:var(--ink);margin-bottom:3px;min-width:220px}
+.m .doc svg{width:26px;height:26px;color:var(--err);flex:none}
+.m .loading{width:220px;height:120px;border-radius:7px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin-bottom:3px}
+.m .quote{border-left:3px solid var(--verde);background:rgba(0,0,0,.04);border-radius:5px;padding:4px 8px;font-size:12px;color:var(--body);margin-bottom:4px}
+.m .tpl{font-size:10.5px;font-weight:700;color:var(--info);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.m .rep{position:absolute;top:4px;right:-30px;opacity:0;transition:.15s}
+.m.out .rep,.m.botm .rep{right:auto;left:-30px}
+.m:hover .rep{opacity:1}
+.composer{flex:none;background:#F0F2F5;padding:8px 12px;display:flex;align-items:flex-end;gap:6px;position:relative}
+.composer textarea{flex:1;border:0;border-radius:10px;padding:10px 12px;resize:none;outline:none;max-height:140px;min-height:42px;line-height:1.4;background:#fff}
+.lockbar{flex:none;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--body)}
+.pending{flex:none;background:#fff;border-top:1px solid var(--line);padding:8px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.pending img{height:48px;border-radius:6px}
+.replying{flex:none;background:#fff;border-top:1px solid var(--line);padding:6px 14px;font-size:12.5px;display:flex;align-items:center;gap:10px}
+.replying .q{flex:1;border-left:3px solid var(--verde);padding-left:8px;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recbar{flex:none;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px}
+.dotrec{width:10px;height:10px;border-radius:50%;background:var(--err);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.pop{position:absolute;bottom:58px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);z-index:30;max-height:280px;overflow:auto}
+.pop.emojis{left:12px;width:300px;padding:8px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.pop.emojis button{font-size:20px;padding:4px;border-radius:6px}
+.pop.emojis button:hover{background:var(--bg)}
+.pop.rapidas{left:60px;right:60px}
+.pop.rapidas .ritem{padding:9px 12px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13px}
+.pop.rapidas .ritem:hover,.pop.rapidas .ritem.sel{background:var(--verde-bg)}
+.pop.rapidas .ritem b{color:var(--verde-700);margin-right:6px}
+
+/* ---------- ficha ---------- */
+.ficha{width:340px;flex:none;background:#fff;border-left:1px solid var(--line);overflow:auto}
+.ficha.closed{display:none}
+.fhead{padding:16px;text-align:center;border-bottom:1px solid var(--line2)}
+.fhead .avatar{width:64px;height:64px;font-size:22px;margin-bottom:8px}
+.fhead b{display:block;font-size:15px}
+.fsec{padding:14px 16px;border-bottom:1px solid var(--line2)}
+.fsec .fh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:4px 8px;font-size:12.5px}
+.kv .k{color:var(--muted)}
+.kv .v{word-break:break-word}
+.kv .v.falta{color:#B5892A}
+.pet{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.pet .pt{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pet .pt b{font-size:14px}
+.ped{background:var(--bg);border-radius:9px;padding:8px 10px;margin-top:8px;font-size:12px}
+.gest{font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.gest:last-child{border-bottom:0}
+.note{background:#FFFBEA;border:1px solid #F3E6B3;border-radius:9px;padding:7px 9px;font-size:12.5px;margin-bottom:6px;white-space:pre-wrap}
+.note .t{font-size:10.5px;color:var(--muted);margin-top:3px}
+.ev{font-size:11.5px;color:var(--muted);padding:3px 0}
+
+/* ---------- tablas ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--line);background:#FAFBFA;position:sticky;top:0}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover td{background:var(--bg)}
+.tbl input.inp{padding:6px 8px}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .search{background:#fff;border:1px solid var(--line);min-width:260px}
+
+/* ---------- métricas ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi .n{font-size:26px;font-weight:800;font-family:Montserrat,sans-serif;margin-top:4px}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:160px;padding-top:10px}
+.bars .b{flex:1;background:var(--verde-claro);border-radius:3px 3px 0 0;position:relative;min-height:2px}
+.bars .b i{position:absolute;bottom:0;left:0;right:0;background:var(--verde);border-radius:3px 3px 0 0}
+.heat{display:grid;grid-template-columns:40px repeat(24,1fr);gap:2px;font-size:10px;color:var(--muted)}
+.heat .c{height:18px;border-radius:3px;background:var(--line2)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- configuración ---------- */
+.cfg{display:flex;gap:20px;align-items:flex-start}
+.cfgnav{width:220px;flex:none;position:sticky;top:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px}
+.cfgnav button{display:block;width:100%;text-align:left;padding:9px 12px;border-radius:9px;font-weight:600;font-size:13px;color:var(--body)}
+.cfgnav button:hover{background:var(--bg)}
+.cfgnav button.on{background:var(--verde-bg);color:var(--verde-900)}
+.cfgpanes{flex:1;min-width:0}
+.cfgpane{display:none}
+.cfgpane.on{display:block}
+.savebar{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:6px 0}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days label{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:13px;cursor:pointer}
+.days input{accent-color:var(--verde)}
+.kitem{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.kitem .kh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.tplcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.tplcard pre{white-space:pre-wrap;font-family:inherit;font-size:13px;background:var(--bg);border-radius:8px;padding:8px 10px;margin-top:6px}
+
+/* ---------- modal y avisos ---------- */
+.ovl{position:fixed;inset:0;background:rgba(15,25,22,.45);z-index:120;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:520px;max-width:100%;max-height:92vh;overflow:auto;padding:20px}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:4px}
+.modal .desc{color:var(--muted);font-size:13px;margin-bottom:8px;line-height:1.5}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:150;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.lightbox img{max-width:92vw;max-height:92vh;border-radius:6px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;z-index:300;font-size:13px;box-shadow:var(--sh);max-width:90vw}
+#toast.err{background:var(--err)}
+.alert{border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin:8px 0}
+.alert.warn{background:var(--warn-bg);color:var(--warn)}
+.alert.info{background:var(--info-bg);color:var(--info)}
+
+/* ---------- celular ---------- */
+.back{display:none}
+@media (max-width:1180px){ .ficha{position:absolute;right:0;top:0;bottom:0;z-index:40;box-shadow:var(--sh)} }
+@media (max-width:860px){
+  #login{grid-template-columns:1fr} .lg-left{display:none}
+  .rail{position:fixed;bottom:0;left:0;right:0;width:auto;height:62px;flex-direction:row;justify-content:space-around;padding:0 4px;z-index:60}
+  .rail .lg,.rail .foot{display:none}
+  .shell{flex-direction:column} .main{padding-bottom:62px}
+  .topbar{padding:0 12px} .topbar .sub,#me-name,#demopill{display:none}
+  .ch{height:auto;min-height:58px;flex-wrap:wrap;padding:8px 10px;gap:8px} .ch .who{min-width:55%} .ch .row{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .list{width:100%} .chat{display:none}
+  body.chat-open .list{display:none} body.chat-open .chat{display:flex}
+  .back{display:inline-flex}
+  .ficha{width:100%}
+  .m{max-width:86%} .msgs{padding:12px 10px}
+  .cfg{flex-direction:column} .cfgnav{width:100%;position:static;display:flex;overflow:auto} .cfgnav button{white-space:nowrap}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+<div id="toast" class="hidden"></div>
+
+<!-- ======================= LOGIN ======================= -->
+<div id="login">
+  <div class="lg-left">
+    <div class="brand"><span class="paw"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="9.5" rx="2.1" ry="2.7"/><ellipse cx="10" cy="5.8" rx="2.1" ry="2.7"/><ellipse cx="14.2" cy="5.8" rx="2.1" ry="2.7"/><ellipse cx="18" cy="9.5" rx="2.1" ry="2.7"/><path d="M12 11c-3.2 0-6.2 3.6-6.2 6.3 0 1.9 1.4 2.9 3.1 2.9 1.2 0 2-.6 3.1-.6s1.9.6 3.1.6c1.7 0 3.1-1 3.1-2.9 0-2.7-3-6.3-6.2-6.3z"/></svg></span>FielPet</div>
+    <div>
+      <h2>Las consultas de WhatsApp, <em>en un solo lugar.</em></h2>
+      <p>El asistente atiende y prepara las altas. Vos tomás la conversación cuando hace falta y respondés desde acá.</p>
+    </div>
+    <div class="caps" style="color:rgba(255,255,255,.55)">Seguro para perros y gatos · BBVA Seguros</div>
+  </div>
+  <div class="lg-right">
+    <form class="lg-card" onsubmit="doLogin(event)">
+      <h1>Ingresar al panel</h1>
+      <div class="sub">Usá el email y la contraseña que te asignaron.</div>
+      <label class="lbl" for="l-email">Email</label><input class="inp" id="l-email" type="email" autocomplete="username" required>
+      <label class="lbl" for="l-pass">Contraseña</label><input class="inp" id="l-pass" type="password" autocomplete="current-password" required>
+      <div style="height:14px"></div>
+      <button class="btn full" id="l-btn" type="submit">Ingresar</button>
+      <div id="l-err" style="color:var(--err);font-size:12.5px;margin-top:12px;min-height:16px;text-align:center"></div>
+      <div id="l-demo" class="alert info hidden">Modo demostración: el panel no está conectado a Supabase. Entrá con cualquier email para recorrerlo con datos de ejemplo.</div>
+      <a class="powered" href="https://waia.ar" target="_blank" rel="noopener"><span>Desarrollado por</span><span class="waia-logo"><img alt="WAIA" src="data:image/png;base64,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"></span></a>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= APP ======================= -->
+<div class="shell hidden" id="app">
+  <nav class="rail">
+    <div class="lg" title="FielPet"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="9.5" rx="2.1" ry="2.7"/><ellipse cx="10" cy="5.8" rx="2.1" ry="2.7"/><ellipse cx="14.2" cy="5.8" rx="2.1" ry="2.7"/><ellipse cx="18" cy="9.5" rx="2.1" ry="2.7"/><path d="M12 11c-3.2 0-6.2 3.6-6.2 6.3 0 1.9 1.4 2.9 3.1 2.9 1.2 0 2-.6 3.1-.6s1.9.6 3.1.6c1.7 0 3.1-1 3.1-2.9 0-2.7-3-6.3-6.2-6.3z"/></svg></div>
+    <button class="tab active" data-v="inbox" onclick="go('inbox')"><span class="badge hidden" id="nb"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Bandeja</button>
+    <button class="tab" data-v="pedidos" onclick="go('pedidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Altas</button>
+    <button class="tab" data-v="contactos" onclick="go('contactos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Contactos</button>
+    <button class="tab adm" data-v="metricas" onclick="go('metricas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></svg>Métricas</button>
+    <button class="tab" data-v="config" onclick="go('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Configurar</button>
+    <div class="foot">
+      <span class="avatar" id="me-av" title="Mi cuenta" onclick="go('config');cfgPane('cuenta')" style="cursor:pointer"></span>
+      <button class="tab" onclick="logout()" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Salir</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div><h1 id="tt">Bandeja</h1><div class="sub" id="ts"></div></div>
+      <div class="right">
+        <span class="pill demo hidden" id="demopill"><span class="dot"></span>Demostración</span>
+        <span class="pill on" id="botpill"><span class="dot"></span>Bot activo</span>
+        <div class="bell"><button class="ibtn" onclick="toggleNotif()" title="Avisos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button><span class="bdot hidden" id="bdot"></span>
+          <div class="notif hidden" id="notif"></div></div>
+        <span class="caps" id="me-name"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- =============== BANDEJA =============== -->
+      <section class="view active" id="v-inbox">
+        <div class="inbox">
+          <aside class="list">
+            <div class="lh">
+              <div class="row">
+                <div class="search grow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="q" placeholder="Buscar nombre, número o mensaje" oninput="renderList()"></div>
+                <button class="btn sm" onclick="openNueva()" title="Escribirle a un número nuevo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Nueva</button>
+              </div>
+              <div class="filt" id="filt"></div>
+            </div>
+            <div class="convs" id="convs"><div class="empty-chat" style="padding:40px">Cargando…</div></div>
+          </aside>
+          <section class="chat" id="chat"><div class="empty-chat"><b style="color:var(--ink)">Elegí una conversación</b><br>Las que esperan a una persona aparecen marcadas en amarillo.</div></section>
+          <aside class="ficha closed" id="ficha"></aside>
+        </div>
+      </section>
+
+      <!-- =============== ALTAS (PEDIDOS) =============== -->
+      <section class="view" id="v-pedidos"><div class="scroll"><div class="pad">
+        <div class="toolbar">
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="pq" placeholder="Buscar cliente o mascota" oninput="renderPedidos()"></div>
+          <select class="inp" id="pf" style="width:auto" onchange="renderPedidos()">
+            <option value="">Todos los estados</option><option value="vigente">Vigentes</option><option value="vencido">Vencidos</option>
+            <option value="conflicto">Ya usados</option><option value="rechazado">Rechazados</option><option value="error">Con error</option>
+          </select>
+          <span class="grow"></span>
+          <button class="btn ghost sm" onclick="exportPedidos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
+        </div>
+        <div class="card" style="padding:0;overflow:auto"><table class="tbl" id="ptbl"></table></div>
+        <div class="hint">Cada enlace es personal y vence a las 24 horas. El panel no muestra el enlace: para reenviarlo, abrí la conversación y usá "Generar enlace" en la ficha (si los datos no cambiaron, FielPet devuelve el mismo).</div>
+      </div></div></section>
+
+      <!-- =============== CONTACTOS =============== -->
+      <section class="view" id="v-contactos"><div class="scroll"><div class="pad">
+        <div class="toolbar">
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="cq" placeholder="Buscar nombre, número o mascota" oninput="renderContactos()"></div>
+          <select class="inp" id="cf" style="width:auto" onchange="renderContactos()">
+            <option value="">Todas las etapas</option><option value="nuevo">Nuevo</option><option value="asesorando">Asesorando</option><option value="cotizado">Cotizado</option>
+            <option value="listo_para_cerrar">Listo para cerrar</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option><option value="perdido">Perdido</option>
+          </select>
+          <span class="grow"></span>
+          <button class="btn ghost sm" onclick="exportContactos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar CSV</button>
+        </div>
+        <div class="card" style="padding:0;overflow:auto"><table class="tbl" id="ctbl"></table></div>
+      </div></div></section>
+
+      <!-- =============== MÉTRICAS =============== -->
+      <section class="view" id="v-metricas"><div class="scroll"><div class="pad">
+        <div class="toolbar"><div class="filt" id="mdias" style="margin:0"></div></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="card"><h3>Personas y enlaces por día</h3><div class="desc">Barra clara: personas que escribieron. Barra oscura: enlaces de alta generados.</div><div class="bars" id="mbars"></div><div class="legend"><span><i style="background:var(--verde-claro)"></i>Personas</span><span><i style="background:var(--verde)"></i>Enlaces</span></div></div>
+        <div class="card"><h3>¿Cuándo escribe la gente?</h3><div class="desc">Personas distintas por día de la semana y hora.</div><div class="heat" id="mheat"></div></div>
+        <div class="card"><h3>Derivaciones al equipo</h3><div class="desc">Lo que el bot pasó a una persona, por tipo.</div><div id="mder"></div></div>
+      </div></div></section>
+
+      <!-- =============== CONFIGURACIÓN =============== -->
+      <section class="view" id="v-config"><div class="scroll"><div class="pad"><div class="cfg">
+        <nav class="cfgnav" id="cfgnav"></nav>
+        <div class="cfgpanes" id="cfgpanes"></div>
+      </div></div></div></section>
+    </div>
+  </div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+// =====================================================================
+//  Modo demostración: datos de ejemplo en memoria (no se guarda nada)
+// =====================================================================
+function demoDb() {
+  const ahora = Date.now(); const hace = (min) => new Date(ahora - min * 60000).toISOString();
+  const yo = { email: 'demo@fielpet.com.ar', nombre: 'Demo', nombre_visible: 'Carla', rol: 'admin', activo: true };
+  const T = {
+    fielpet_usuarios: [yo, { email: 'martin@fielpet.com.ar', nombre: 'Martín', nombre_visible: 'Martín', rol: 'vendedor', activo: true }, { email: 'sofia@fielpet.com.ar', nombre: 'Sofía', nombre_visible: 'Sofía', rol: 'vendedor', activo: true }],
+    fielpet_config: Object.entries({ bot_activo: 'true', mensaje_mantenimiento: 'Hola, gracias por escribir a FielPet. En este momento el asistente está en mantenimiento.', horario_dias: '1,2,3,4,5', horario_desde: '08:00', horario_hasta: '16:30',
+      horas_nueva_charla: '6', segundos_agrupar: '6', avisar_toma: 'true', mensaje_toma: 'Hola {nombre}, te escribe {usuario}, del equipo de FielPet. Sigo yo con tu consulta.', devolver_bot_horas: '0',
+      cierre_por_defecto: 'true', mensaje_cierre: 'Damos por resuelta tu consulta. Si necesitás algo más, escribinos por acá.', mensaje_error: 'Perdón, no pude procesar tu mensaje. ¿Me lo repetís?', indicaciones_extra: '',
+      entorno: 'desarrollo', api_base_url: 'https://dapi.fielpet.com', codigo_vendedor: '', telefono_asistencias: '0800-999-0000', web: 'https://www.fielpet.com.ar', app_android: 'https://play.google.com/store/apps/details?id=com.ar.dawerbrokers.fielpet', app_ios: '', mail_atencion: '', link_baja: '' })
+      .map(([clave, valor]) => ({ clave, valor })),
+    fielpet_bandeja: [
+      { wa_id: '5493415550101', lead_id: 'L1', nombre: 'Ana Pérez', nombre_wa: 'Ana', estado: 'esperando', motivo: 'reclamo', ultimo_msg_at: hace(3), ultimo_msg_txt: '¿De qué mascota es y más o menos cuándo lo pediste?', ultimo_msg_emisor: 'bot', ultimo_cliente_at: hace(4), no_leidos: 2, etiquetas: ['reintegro'], estado_venta: 'cerrado' },
+      { wa_id: '5491155550202', lead_id: 'L2', nombre: 'Julián Gómez', nombre_wa: 'Juli', estado: 'tomada', tomada_por: yo.email, ultimo_msg_at: hace(12), ultimo_msg_txt: 'Dale, pasame el link', ultimo_msg_emisor: 'cliente', ultimo_cliente_at: hace(12), no_leidos: 1, etiquetas: ['caliente'], estado_venta: 'listo_para_cerrar' },
+      { wa_id: '5493515550303', lead_id: 'L3', nombre: null, nombre_wa: 'Mica 🐾', estado: 'bot', ultimo_msg_at: hace(40), ultimo_msg_txt: 'Bien. ¿Michi es de alguna raza o es mestizo?', ultimo_msg_emisor: 'bot', ultimo_cliente_at: hace(41), no_leidos: 0, etiquetas: [], estado_venta: 'asesorando' },
+      { wa_id: '5492615550404', lead_id: 'L4', nombre: 'Roberto Díaz', nombre_wa: 'Roberto', estado: 'tomada', tomada_por: 'martin@fielpet.com.ar', ultimo_msg_at: hace(180), ultimo_msg_txt: 'Te paso el detalle del plan 3', ultimo_msg_emisor: 'vendedor', ultimo_cliente_at: hace(200), no_leidos: 0, etiquetas: [], estado_venta: 'cotizado' },
+      { wa_id: '5493425550505', lead_id: 'L5', nombre: 'Lucía Fernández', nombre_wa: 'Lu', estado: 'cerrada', ultimo_msg_at: hace(2000), ultimo_msg_txt: 'Damos por resuelta tu consulta.', ultimo_msg_emisor: 'vendedor', ultimo_cliente_at: hace(2100), no_leidos: 0, etiquetas: [], estado_venta: 'cerrado' },
+    ],
+    fielpet_mensajes: [], fielpet_eventos: [],
+    fielpet_leads: [], fielpet_personas: [], fielpet_mascotas: [], fielpet_gestiones: [], fielpet_notas: [], fielpet_pedidos_panel: [],
+    fielpet_notificaciones: [
+      { id: 1, tipo: 'derivada', wa_id: '5493415550101', texto: 'Ana Pérez · reclamo: No le llegó el reintegro de la consulta de octubre.', leida_por: [], creado: hace(3) },
+      { id: 2, tipo: 'listo_para_cerrar', wa_id: '5491155550202', texto: 'Julián Gómez está listo para cerrar: Rocky, Plan 3.', leida_por: [], creado: hace(15) },
+    ],
+    fielpet_respuestas_rapidas: [{ id: 1, atajo: 'carencias', texto: 'Las carencias son: accidentes, 72 horas hábiles; enfermedades, 30 días; vacunas, 3 meses.' }, { id: 2, atajo: 'pago', texto: 'Se paga por débito automático con tarjeta de crédito o CBU, a mes vencido.' }],
+    fielpet_feriados: [{ id: 1, desde: '2026-12-25', hasta: '2026-12-25', motivo: 'Navidad' }],
+    fielpet_conocimiento: [
+      { id: 1, clave: 'que_cubre', tipo: 'seccion', titulo: 'Qué cubre', contenido: 'Todos los gastos veterinarios por enfermedad o accidente que no sean anteriores a la contratación…', orden: 10, activo: true },
+      { id: 2, clave: 'carencias', tipo: 'seccion', titulo: 'Carencias', contenido: 'Accidentes y responsabilidad civil, 72 horas hábiles; enfermedades, 30 días; vacunas, 3 meses.', orden: 60, activo: true },
+      { id: 3, clave: null, tipo: 'faq', titulo: '¿Puedo asegurar un perro de 15 años?', contenido: 'Sí, hasta los 18 años. Paga la franja de 13 a 18 años.', orden: 500, activo: true }],
+    fielpet_asistencias: [{ id: 1, categoria: 'Mascota', servicio: 'Guardería por vacaciones', monto: 60000, eventos: 1, periodo: 'por año', nota: null, activo: true, orden: 1 }, { id: 2, categoria: 'Hogar', servicio: 'Plomería', monto: null, eventos: 3, periodo: 'por año', nota: 'Mano de obra', activo: true, orden: 2 }],
+    fielpet_planes: [[8, 1, 500000, 19047], [9, 2, 700000, 26216], [10, 3, 1000000, 36970], [11, 4, 1500000, 54892], [12, 5, 2000000, 72815]].map(([id, numero, suma_asegurada, costo]) => ({ entorno: 'desarrollo', id, numero, nombre: 'Plan ' + numero, suma_asegurada, costo, activo: true, visible: true, sincronizado: hace(20) })),
+    fielpet_precios: [1, 2, 3, 4, 5].flatMap((n) => [['3m-10a', [19047, 26216, 36970, 54892, 72815][n - 1]], ['10a-13a', null], ['13a-18a', null]].map(([franja, precio]) => ({ numero_plan: n, franja, precio }))),
+  };
+  // Clientes de ejemplo
+  const L = (id, wa, nombre_wa, estado, extra = {}) => T.fielpet_leads.push({ id, wa_id: wa, nombre_wa, estado, interes: extra.interes || null, necesidades: extra.necesidades || null, objeciones: null, resumen_vendedor: extra.resumen || null, etiquetas: (T.fielpet_bandeja.find((c) => c.wa_id === wa) || {}).etiquetas || [] });
+  L('L1', '5493415550101', 'Ana', 'cerrado'); L('L2', '5491155550202', 'Juli', 'listo_para_cerrar', { interes: 'caliente', necesidades: 'Rocky es grande y le preocupan las cirugías.', resumen: 'Quiere el Plan 3 para Rocky.' });
+  L('L3', '5493515550303', 'Mica 🐾', 'asesorando'); L('L4', '5492615550404', 'Roberto', 'cotizado'); L('L5', '5493425550505', 'Lu', 'cerrado');
+  T.fielpet_personas.push(
+    { id: 'P1', lead_id: 'L1', relacion: 'yo', nombre: 'Ana', apellido: 'Pérez', dni: '30111222', fecha_nacimiento: '1990-05-12', genero: 'F', email: 'ana@example.com', celular: '3415550101', direccion: 'Córdoba', numero: '1234', provincia: 'Santa Fe', localidad_id: 4568, localidad_nombre: 'ROSARIO', codigo_postal: '2000' },
+    { id: 'P2', lead_id: 'L2', relacion: 'yo', nombre: 'Julián', apellido: 'Gómez', dni: '35999888', fecha_nacimiento: '1993-08-02', genero: 'M', email: 'julian@example.com', celular: '1155550202', direccion: 'Av. Rivadavia', numero: '5000', piso: '3', departamento: 'B', provincia: null, localidad_id: null, localidad_nombre: null },
+    { id: 'P3', lead_id: 'L3', relacion: 'yo', celular: '3515550303' }, { id: 'P3b', lead_id: 'L3', relacion: 'mamá', nombre: 'Marta' },
+    { id: 'P4', lead_id: 'L4', relacion: 'yo', nombre: 'Roberto', apellido: 'Díaz', celular: '2615550404' }, { id: 'P5', lead_id: 'L5', relacion: 'yo', nombre: 'Lucía', apellido: 'Fernández', celular: '3425550505' });
+  T.fielpet_mascotas.push(
+    { id: 'M1', lead_id: 'L1', titular_id: 'P1', nombre: 'Luna', animal: 'Perro', raza: 'Mestizo', sexo: 'H', color: 'Negra', fecha_nacimiento: '2022-03-01', fecha_aproximada: false, plan_elegido: 2, precio_mensual: 26216, estado: 'link_enviado' },
+    { id: 'M2', lead_id: 'L2', titular_id: 'P2', nombre: 'Rocky', animal: 'Perro', raza: 'Labrador Retriever', sexo: 'M', color: 'Dorado', fecha_nacimiento: '2021-06-01', fecha_aproximada: true, plan_recomendado: 3, plan_elegido: 3, precio_mensual: 36970, enfermedades_previas: 'Displasia leve de cadera', estado: 'cotizada' },
+    { id: 'M3', lead_id: 'L3', titular_id: 'P3b', nombre: 'Michi', animal: 'Gato', raza: null, raza_dicha: 'gato atigrado', sexo: 'M', color: 'Atigrado', estado: 'en_charla' });
+  T.fielpet_gestiones.push({ id: 'G1', lead_id: 'L1', tipo: 'reclamo', mascota: 'Luna', detalle: 'No le llegó el reintegro de la consulta del 10/10. Quiere saber en qué estado está.', estado: 'derivada', creado: hace(3) },
+    { id: 'G2', lead_id: 'L2', tipo: 'venta', mascota: 'Rocky', detalle: null, estado: 'abierta', creado: hace(20) });
+  T.fielpet_notas.push({ id: 1, wa_id: '5491155550202', texto: 'Prefiere que lo contacten a la tarde.', autor: 'martin@fielpet.com.ar', creado: hace(60) });
+  T.fielpet_pedidos_panel.push({ request_id: 'a'.repeat(32), creado: hace(1500), estado: 'vigente', estado_actual: 'vigente', expires_at: new Date(ahora - 1500 * 60000 + 864e5).toISOString(), creado_por: 'bot', intentos: 1, entorno: 'desarrollo', wa_id: '5493415550101', cliente: 'Ana Pérez', mascota: 'Luna', animal: 'Perro', plan_elegido: 2 },
+    { request_id: 'b'.repeat(32), creado: hace(4000), estado: 'vencido', estado_actual: 'vencido', expires_at: hace(2560), creado_por: 'martin@fielpet.com.ar', intentos: 1, entorno: 'desarrollo', wa_id: '5493425550505', cliente: 'Lucía Fernández', mascota: 'Toto', animal: 'Gato', plan_elegido: null });
+  // Mensajes
+  let mid = 1; const M = (wa, min, emisor, texto, x = {}) => T.fielpet_mensajes.push({ id: mid++, wa_id: wa, emisor, tipo: 'texto', texto, creado: hace(min), wamid: 'wamid.' + mid, estado_envio: emisor === 'cliente' ? 'recibido' : 'leido', ...x });
+  M('5493415550101', 30, 'cliente', 'Hola, buenas tardes');
+  M('5493415550101', 29.8, 'bot', 'Hola Ana, ¿cómo estás? ¿En qué te ayudo hoy?');
+  M('5493415550101', 6, 'cliente', null, { tipo: 'audio', transcripcion: 'Quería hacer un reclamo, nunca me llegó el reintegro de la consulta de Luna', media_path: 'demo/audio.ogg' });
+  M('5493415550101', 5.8, 'bot', 'Perdón por la demora. Lo paso ahora al equipo de atención para que lo revise una persona.');
+  M('5493415550101', 5, 'cliente', 'Te mando la factura', { tipo: 'imagen', media_path: 'demo/factura.png' });
+  M('5493415550101', 4, 'cliente', 'Es de la consulta del 10 de octubre');
+  M('5493415550101', 3, 'bot', '¿De qué mascota es y más o menos cuándo lo pediste?', { estado_envio: 'entregado' });
+  M('5491155550202', 90, 'cliente', 'Hola, quiero asegurar a mi perro Rocky, es un labrador de 5 años');
+  M('5491155550202', 89.8, 'bot', 'Bien. Para un labrador de 5 años te recomiendo el Plan 3 ($36.970 por mes): los estudios y cirugías en razas grandes se acumulan.');
+  M('5491155550202', 60, 'cliente', 'Me interesa, pero quiero hablar con alguien');
+  M('5491155550202', 30, 'vendedor', 'Hola Julián, te escribe Carla, del equipo de FielPet. Sigo yo con tu consulta.', { usuario: yo.email });
+  M('5491155550202', 25, 'vendedor', 'Con el Plan 3 tenés un tope de $1.000.000 por año. ¿Avanzamos con el alta?', { usuario: yo.email });
+  M('5491155550202', 12, 'cliente', 'Dale, pasame el link');
+  M('5493515550303', 42, 'cliente', 'hola! quiero asegurar el gato de mi mamá');
+  M('5493515550303', 41.5, 'bot', 'Hola, ¿cómo estás? ¿Cómo se llama y cuántos años tiene?');
+  M('5493515550303', 41, 'cliente', 'Michi, tiene 4 años, es un gato atigrado');
+  M('5493515550303', 40, 'bot', 'Bien. ¿Michi es de alguna raza o es mestizo?');
+  M('5492615550404', 200, 'cliente', 'Cuánto sale el plan 3?');
+  M('5492615550404', 180, 'vendedor', 'Te paso el detalle del plan 3', { usuario: 'martin@fielpet.com.ar' });
+  M('5493425550505', 2100, 'cliente', 'Gracias, ya está');
+  M('5493425550505', 2000, 'vendedor', 'Damos por resuelta tu consulta.', { usuario: 'martin@fielpet.com.ar' });
+  T.fielpet_eventos.push({ id: 1, wa_id: '5491155550202', tipo: 'tomar', usuario: yo.email, creado: hace(31) }, { id: 2, wa_id: '5493415550101', tipo: 'derivada_por_bot', usuario: 'bot', detalle: { tipo: 'reclamo' }, creado: hace(5.7) });
+
+  const RAZAS = { Perro: ['Mestizo', 'Labrador Retriever', 'Golden Retriever', 'Pastor Alemán', 'Caniche', 'Bulldog francés', 'Bulldog inglés', 'Beagle', 'Border Collie'], Gato: ['Mestizo', 'Siamés', 'Persa', 'Maine coon', 'Comun Europeo', 'Bengala'] };
+  const LOCS = [[4568, 'ROSARIO', 'Santa Fe', '2000'], [6106, 'VILLA GOBERNADOR GALVEZ', 'Santa Fe', '2124'], [5907, 'SANTA ROSA', 'Santa Fe', '3000'], [953, 'CABALLITO', 'Capital Federal', '1406'], [167, 'RIVADAVIA AVDA.', 'Capital Federal', '1406'], [20001, 'CORDOBA', 'Cordoba', '5000']];
+  const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const conv = (wa) => T.fielpet_bandeja.find((c) => c.wa_id === wa);
+  const msg = (wa, emisor, texto, x = {}) => { T.fielpet_mensajes.push({ id: mid++, wa_id: wa, emisor, tipo: 'texto', texto, creado: new Date().toISOString(), wamid: 'wamid.' + mid, estado_envio: 'enviado', usuario: yo.email, ...x }); const c = conv(wa); if (c) Object.assign(c, { ultimo_msg_at: new Date().toISOString(), ultimo_msg_txt: texto || x.tipo, ultimo_msg_emisor: emisor }); };
+  const ev = (wa, tipo, detalle) => T.fielpet_eventos.push({ id: Date.now(), wa_id: wa, tipo, usuario: yo.email, detalle, creado: new Date().toISOString() });
+  const match = (r, eq) => Object.entries(eq || {}).every(([k, x]) => r[k] === x);
+  const IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220"><rect width="320" height="220" fill="#F4F6F5"/><rect x="24" y="24" width="272" height="172" rx="8" fill="#fff" stroke="#E3E8E6"/><text x="44" y="64" font-family="Arial" font-size="18" font-weight="bold" fill="#1D9D6F">Veterinaria San Roque</text><text x="44" y="96" font-family="Arial" font-size="13" fill="#444">Factura B · 0003-00012345</text><text x="44" y="122" font-family="Arial" font-size="13" fill="#444">Consulta clínica · Luna</text><text x="44" y="160" font-family="Arial" font-size="20" font-weight="bold" fill="#1F2624">$ 38.500</text></svg>');
+  return {
+    async login() {}, async session() { return window._demoS || null; }, async logout() { window._demoS = null; },
+    async rpc(fn, a = {}) {
+      window._demoS = true;
+      const c = conv(a.p_wa_id);
+      switch (fn) {
+        case 'fielpet_yo': return clone(yo);
+        case 'fielpet_equipo': return T.fielpet_usuarios.map((u) => ({ email: u.email, nombre_visible: u.nombre_visible || u.nombre, rol: u.rol, activo: u.activo }));
+        case 'fielpet_tomar': { const ya = c.estado === 'tomada' && c.tomada_por === yo.email; Object.assign(c, { estado: 'tomada', tomada_por: yo.email, derivada_por: null }); if (!ya) ev(c.wa_id, 'tomar'); return { ok: true, ya_era_tuya: ya }; }
+        case 'fielpet_devolver_bot': Object.assign(c, { estado: 'bot', tomada_por: null, motivo: null }); ev(c.wa_id, 'devolver'); return { ok: true };
+        case 'fielpet_derivar': Object.assign(c, { estado: 'tomada', tomada_por: a.p_para, derivada_por: yo.email }); ev(c.wa_id, 'derivar', { para: a.p_para }); return { ok: true };
+        case 'fielpet_cerrar': Object.assign(c, { estado: 'cerrada', tomada_por: null }); ev(c.wa_id, 'cerrar'); return { ok: true };
+        case 'fielpet_marcar_leido': if (c) c.no_leidos = 0; return null;
+        case 'fielpet_marcar_notificaciones': T.fielpet_notificaciones.forEach((n) => n.leida_por.push(yo.email)); return null;
+        case 'fielpet_etiquetas': { const l = T.fielpet_leads.find((x) => x.wa_id === a.p_wa_id); l.etiquetas = a.p_etiquetas; c.etiquetas = a.p_etiquetas; return null; }
+        case 'fielpet_mi_nombre': yo.nombre_visible = a.p_nombre; T.fielpet_usuarios[0].nombre_visible = a.p_nombre; return null;
+        case 'fielpet_buscar_raza': return (RAZAS[a.p_animal] || []).filter((r) => norm(r).includes(norm(a.p_texto)) || norm(a.p_texto).includes(norm(r).split(' ')[0])).map((r) => ({ raza: r, animal: a.p_animal, parecido: norm(r) === norm(a.p_texto) ? 1 : 0.6 }));
+        case 'fielpet_buscar_localidad': return LOCS.filter((l) => l[2] === a.p_provincia && (!a.p_texto || norm(l[1]).includes(norm(a.p_texto))) && (!a.p_codigo_postal || l[3] === a.p_codigo_postal)).map((l) => ({ localidad_id: l[0], localidad: l[1], provincia: l[2], codigo_postal: l[3], parecido: 1 }));
+        case 'fielpet_metricas': return { personas: 184, nuevos: 121, mensajes_recibidos: 1630, enlaces_generados: 52, personas_con_enlace: 47, enlaces_con_error: 2, derivaciones: { reclamo: 9, siniestro: 6, asesor: 14, baja: 2, cambio_poliza: 4 }, tomadas: 31, mensajes_panel: 212, minutos_hasta_tomar_mediana: 18.5,
+          por_dia: Array.from({ length: Math.min(a.p_dias || 30, 30) }, (_, i) => { const d = new Date(ahora - (29 - i) * 864e5); const p = 3 + Math.round(6 * Math.abs(Math.sin(i / 2.3))) + (d.getDay() === 0 || d.getDay() === 6 ? 4 : 0); return { dia: d.toISOString().slice(0, 10), personas: p, enlaces: Math.round(p * 0.28) }; }),
+          por_hora: [1, 2, 3, 4, 5, 6, 7].flatMap((dw) => Array.from({ length: 24 }, (_, h) => ({ dow: dw, hora: h, personas: h < 7 ? 0 : Math.round((dw > 5 ? 6 : 3) * Math.exp(-((h - (dw > 5 ? 11 : 20)) ** 2) / 18)) }))).filter((x) => x.personas) };
+      }
+      return null;
+    },
+    async sel(t, o = {}) {
+      window._demoS = true;
+      let r = clone(T[t] || []).filter((x) => match(x, o.eq));
+      if (o.order) r.sort((a, b) => (a[o.order] > b[o.order] ? 1 : a[o.order] < b[o.order] ? -1 : 0) * (o.desc ? -1 : 1));
+      if (o.limit) r = r.slice(0, o.limit);
+      return r;
+    },
+    async ins(t, row) { const r = { id: 'n' + Date.now(), creado: new Date().toISOString(), ...row }; (T[t] = T[t] || []).push(r); return [r]; },
+    async upd(t, eq, patch) { (T[t] || []).filter((x) => match(x, eq)).forEach((x) => Object.assign(x, patch)); if (t === 'fielpet_personas' || t === 'fielpet_leads') T.fielpet_bandeja.forEach((c) => { const l = T.fielpet_leads.find((x) => x.wa_id === c.wa_id); const p = T.fielpet_personas.find((x) => x.lead_id === l.id && x.relacion === 'yo'); if (p) c.nombre = [p.nombre, p.apellido].filter(Boolean).join(' ') || null; c.estado_venta = l.estado; }); },
+    async del(t, eq) { T[t] = (T[t] || []).filter((x) => !match(x, eq)); },
+    async ups(t, rows, on) { const ks = on.split(','); for (const row of rows) { const e = (T[t] || []).find((x) => ks.every((k) => x[k] === row[k])); if (e) Object.assign(e, row); else T[t].push(row); } },
+    async signed(path) { return path === 'demo/factura.png' ? IMG : null; },
+    async upload() {}, async password() {},
+    async n8n(accion, x = {}) {
+      await new Promise((r) => setTimeout(r, 350));
+      const c = conv(x.wa_id);
+      switch (accion) {
+        case 'responder': msg(x.wa_id, 'vendedor', x.texto, { respuesta_a: x.respuesta_a }); return { ok: true, enviado: true };
+        case 'archivo': msg(x.wa_id, 'vendedor', x.texto || null, { tipo: x.media_categoria, media_nombre: x.media_nombre }); return { ok: true };
+        case 'aviso_toma': msg(x.wa_id, 'vendedor', CFG.mensaje_toma.replace('{nombre}', String(c.nombre || c.nombre_wa).split(' ')[0]).replace('{usuario}', yo.nombre_visible)); return { ok: true };
+        case 'cerrar': if (x.enviar_mensaje && x.texto) msg(x.wa_id, 'vendedor', x.texto); Object.assign(c, { estado: 'cerrada', tomada_por: null }); ev(x.wa_id, 'cerrar'); return { ok: true };
+        case 'plantilla': msg(x.wa_id, 'vendedor', x.texto_preview, { tipo: 'plantilla' }); return { ok: true };
+        case 'nueva': { const wa = '549' + String(x.numero).replace(/\D/g, '').slice(-10); T.fielpet_bandeja.unshift({ wa_id: wa, lead_id: 'L' + wa, nombre: x.nombre, estado: 'tomada', tomada_por: yo.email, ultimo_msg_at: new Date().toISOString(), no_leidos: 0, etiquetas: [], estado_venta: 'nuevo' });
+          T.fielpet_leads.push({ id: 'L' + wa, wa_id: wa, nombre_wa: x.nombre, estado: 'nuevo', etiquetas: [] }); T.fielpet_personas.push({ id: 'P' + wa, lead_id: 'L' + wa, relacion: 'yo', nombre: x.nombre }); msg(wa, 'vendedor', x.texto_preview, { tipo: 'plantilla' }); return { ok: true, wa_id: wa }; }
+        case 'enlace': {
+          const l = T.fielpet_leads.find((y) => y.wa_id === x.wa_id); const m = T.fielpet_mascotas.find((y) => y.lead_id === l.id && y.nombre === x.mascota); const p = T.fielpet_personas.find((y) => y.id === m.titular_id) || {};
+          const faltan = [!p.dni && 'DNI del titular', !p.email && 'email del titular', !p.localidad_id && 'localidad (usá buscar_localidad)', !m.raza && 'raza de la mascota (del catálogo, o Mestizo)', !m.fecha_nacimiento && 'fecha de nacimiento o edad de la mascota'].filter(Boolean);
+          if (faltan.length) return { ok: false, error: 'faltan_datos', faltan };
+          T.fielpet_pedidos_panel.unshift({ request_id: 'c' + Date.now(), creado: new Date().toISOString(), estado: 'vigente', estado_actual: 'vigente', expires_at: new Date(Date.now() + 864e5).toISOString(), creado_por: yo.email, intentos: 1, entorno: 'desarrollo', wa_id: x.wa_id, cliente: [p.nombre, p.apellido].join(' '), mascota: m.nombre, animal: m.animal, plan_elegido: m.plan_elegido });
+          m.estado = 'link_enviado'; msg(x.wa_id, 'vendedor', 'Te paso el enlace para completar el alta de ' + m.nombre + '. Vence en 24 horas.\n\n[enlace de alta]'); ev(x.wa_id, 'enlace', { estado: 'vigente' });
+          return { ok: true, estado: 'vigente' }; }
+        case 'plantillas': return { ok: true, plantillas: [
+          { nombre: 'fielpet_retomar_consulta', idioma: 'es_AR', estado: 'APPROVED', categoria: 'UTILITY', texto: 'Hola {{1}}, te escribimos de FielPet por tu consulta del {{2}}. ¿Seguimos por acá?', variables: 2, botones: [] },
+          { nombre: 'fielpet_enlace_vencido', idioma: 'es_AR', estado: 'PENDING', categoria: 'UTILITY', texto: 'Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.', variables: 2, botones: ['Sí, generar otro', 'Ahora no'] }] };
+        case 'usuario': T.fielpet_usuarios.push({ email: x.nuevo.email, nombre: x.nuevo.nombre, nombre_visible: x.nuevo.nombre, rol: x.nuevo.rol, activo: true }); return { ok: true };
+      }
+      return { ok: false, error: 'accion_invalida' };
+    },
+  };
+}
+
+// =====================================================================
+//  FielPet · Panel de conversaciones (WhatsApp)
+//  Sin config.js (o con ?demo en la URL) arranca en modo demostración.
+// =====================================================================
+const CONF = window.FIELPET_CONFIG || {};
+const DEMO = !CONF.SUPABASE_URL || /[?&]demo\b/.test(location.search);
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PROVINCIAS = ['Buenos Aires', 'Capital Federal', 'Catamarca', 'Chaco', 'Chubut', 'Cordoba', 'Corrientes', 'Entre Rios', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja', 'Mendoza', 'Misiones', 'Neuquen', 'Rio Negro', 'Salta', 'San Juan', 'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero', 'Tierra del Fuego', 'Tucuman'];
+const I = {
+  check: '<svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 6l3.5 3.5L11 2"/></svg>',
+  check2: '<svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 6l3.5 3.5L11 2M6 9.5L14.5 1"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>',
+  smile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  reply: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17l-5-5 5-5M4 12h11a5 5 0 0 1 5 5v2"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+};
+
+let sb = null;
+if (!DEMO) sb = supabase.createClient(CONF.SUPABASE_URL, CONF.SUPABASE_KEY);
+let ME = null, CFG = {}, TEAM = [], RAPIDAS = [], CONVS = [], SEL = null, MSGS = [], EVENTOS = [], FICHA = null;
+let FILTER = 'todas', NOTIFS = [], PENDING = null, REPLY = null, SENDING = false, FICHA_OPEN = window.innerWidth > 1180;
+const SIGNED = {};
+const esAdmin = () => ME && ME.rol === 'admin';
+
+// =====================================================================
+//  Acceso a datos (Supabase real o demostración)
+// =====================================================================
+const db = DEMO ? demoDb() : realDb();
+function realDb() {
+  const q = (table, o = {}) => {
+    let r = sb.from(table).select(o.cols || '*');
+    for (const [k, v] of Object.entries(o.eq || {})) r = r.eq(k, v);
+    if (o.in) r = r.in(o.in[0], o.in[1]);
+    if (o.order) r = r.order(o.order, { ascending: !o.desc });
+    if (o.limit) r = r.limit(o.limit);
+    return r;
+  };
+  return {
+    async login(email, password) { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error; },
+    async session() { const { data } = await sb.auth.getSession(); return data.session; },
+    async logout() { await sb.auth.signOut(); },
+    async rpc(fn, args) { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; },
+    async sel(table, o) { const { data, error } = await q(table, o); if (error) throw error; return data || []; },
+    async ins(table, row) { const { data, error } = await sb.from(table).insert(row).select(); if (error) throw error; return data; },
+    async upd(table, eq, patch) { let r = sb.from(table).update(patch); for (const [k, v] of Object.entries(eq)) r = r.eq(k, v); const { error } = await r; if (error) throw error; },
+    async del(table, eq) { let r = sb.from(table).delete(); for (const [k, v] of Object.entries(eq)) r = r.eq(k, v); const { error } = await r; if (error) throw error; },
+    async ups(table, rows, onConflict) { const { error } = await sb.from(table).upsert(rows, { onConflict }); if (error) throw error; },
+    async signed(path) { const { data, error } = await sb.storage.from('fielpet-media').createSignedUrl(path, 3600); return error ? null : data.signedUrl; },
+    async upload(path, file) { const { error } = await sb.storage.from('fielpet-media').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }); if (error) throw error; },
+    async password(p) { const { error } = await sb.auth.updateUser({ password: p }); if (error) throw error; },
+    async n8n(accion, extra) {
+      if (!CONF.N8N_WEBHOOK) return { ok: false, error: 'sin_webhook' };
+      const s = await this.session();
+      try {
+        const r = await fetch(CONF.N8N_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ accion, access_token: s ? s.access_token : '' }, extra || {})) });
+        return await r.json();
+      } catch (e) { return { ok: false, error: 'sin_conexion' }; }
+    },
+    realtime(h) {
+      sb.channel('fielpet-panel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fielpet_conversaciones' }, (p) => h.conv((p.new && p.new.wa_id) || (p.old && p.old.wa_id)))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fielpet_mensajes' }, (p) => h.msg(p.new || p.old))
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'fielpet_notificaciones' }, (p) => h.notif(p.new))
+        .subscribe();
+    },
+  };
+}
+
+// =====================================================================
+//  Inicio y login
+// =====================================================================
+async function init() {
+  if (DEMO) { $('l-demo').classList.remove('hidden'); $('demopill').classList.remove('hidden'); }
+  try { const s = await db.session(); if (s) return start(); } catch (e) {}
+}
+async function doLogin(e) {
+  e.preventDefault();
+  $('l-err').textContent = ''; $('l-btn').disabled = true;
+  try { await db.login($('l-email').value.trim(), $('l-pass').value); await start(); }
+  catch (err) { $('l-err').textContent = 'Email o contraseña incorrectos.'; }
+  $('l-btn').disabled = false;
+}
+async function logout() { await db.logout(); location.reload(); }
+async function start() {
+  try { ME = await db.rpc('fielpet_yo'); } catch (e) { ME = null; }
+  if (!ME) { $('l-err').textContent = 'Tu usuario no tiene acceso al panel. Pedile a un administrador que te dé de alta.'; await db.logout(); return; }
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  const nombre = ME.nombre_visible || ME.nombre || ME.email;
+  $('me-av').textContent = iniciales(nombre); $('me-av').style.background = colorDe(ME.email);
+  $('me-name').textContent = nombre + (esAdmin() ? ' · admin' : '');
+  document.querySelectorAll('.adm').forEach((x) => x.classList.toggle('hidden', !esAdmin()));
+  await loadBase();
+  await loadConvs();
+  loadNotifs();
+  if (db.realtime) db.realtime({ conv: onConvChange, msg: onMsgChange, notif: onNotif });
+  setInterval(() => { loadConvs(); if (SEL) loadMsgs(true); }, 45000);
+  setInterval(() => { if (SEL) renderWindow(); }, 60000);
+  go('inbox');
+}
+async function loadBase() {
+  const [c, t, r] = await Promise.all([db.sel('fielpet_config'), db.rpc('fielpet_equipo').catch(() => []), db.sel('fielpet_respuestas_rapidas', { order: 'atajo' }).catch(() => [])]);
+  CFG = {}; c.forEach((x) => (CFG[x.clave] = x.valor));
+  TEAM = t || []; RAPIDAS = r || [];
+  botPill();
+}
+function botPill() { const on = CFG.bot_activo !== 'false'; const p = $('botpill'); p.className = 'pill ' + (on ? 'on' : 'off'); p.innerHTML = '<span class="dot"></span>' + (on ? 'Bot activo' : 'Bot apagado'); }
+
+const TITLES = { inbox: ['Bandeja', 'Todo lo que llega al WhatsApp de FielPet'], pedidos: ['Altas', 'Enlaces de alta generados por el bot y por el equipo'],
+  contactos: ['Contactos', 'Personas que escribieron y sus mascotas'], metricas: ['Métricas', 'Cuánta gente escribe, cuándo y cómo termina'],
+  config: ['Configuración', 'El bot, los horarios, los precios, el conocimiento y el equipo'] };
+function go(v) {
+  if (v === 'metricas' && !esAdmin()) v = 'inbox';
+  if (v !== 'inbox') document.body.classList.remove('chat-open');
+  document.querySelectorAll('.tab[data-v]').forEach((t) => t.classList.toggle('active', t.dataset.v === v));
+  document.querySelectorAll('.view').forEach((s) => s.classList.toggle('active', s.id === 'v-' + v));
+  $('tt').textContent = TITLES[v][0]; $('ts').textContent = TITLES[v][1];
+  if (v === 'pedidos') loadPedidos();
+  if (v === 'contactos') loadContactos();
+  if (v === 'metricas') loadMetricas();
+  if (v === 'config') renderConfig();
+}
+
+// =====================================================================
+//  Utilidades
+// =====================================================================
+function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = err ? 'err' : ''; clearTimeout(t._t); t._t = setTimeout(() => t.classList.add('hidden'), 3800); }
+const ERRORES = { no_autorizado: 'Tu sesión venció. Volvé a ingresar.', no_es_tuya: 'Primero tomá la conversación.', tomada: 'La conversación la tiene otra persona.',
+  ventana_cerrada: 'Pasaron más de 24 h desde el último mensaje del cliente: solo se puede enviar una plantilla.', vacio: 'El mensaje está vacío.',
+  plantilla_reciente: 'Ya se le mandó una plantilla y todavía no contestó. Esperá su respuesta.', archivo_no_disponible: 'No se pudo preparar el archivo.',
+  sin_webhook: 'Falta configurar el webhook de n8n (N8N_PANEL_WEBHOOK).', sin_conexion: 'No se pudo conectar con el servidor.', solo_admin: 'Solo un administrador puede hacer esto.',
+  faltan_datos: 'Faltan datos para generar el enlace.', rechazado: 'FielPet rechazó los datos. Revisá la ficha.', conflicto: 'Ese pedido ya figura como usado en FielPet.',
+  numero_invalido: 'El número no es válido.', datos_usuario: 'Completá el email y una contraseña de al menos 8 caracteres.', usuario_invalido: 'Elegí una persona del equipo.' };
+const errTxt = (e) => ERRORES[e] || e || 'No se pudo completar la acción.';
+function iniciales(n) { const p = String(n || '?').replace(/[^\p{L}\s]/gu, ' ').trim().split(/\s+/); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
+function colorDe(s) { let h = 0; for (const c of String(s || '')) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h},42%,46%)`; }
+function fmtTel(wa) {
+  const d = String(wa || '').replace(/\D/g, '');
+  const m = d.match(/^549(\d{10})$/);
+  if (m) { const n = m[1]; const a = n.startsWith('11') ? 2 : 3; return '+54 9 ' + n.slice(0, a) + ' ' + n.slice(a, 6) + '-' + n.slice(6); }
+  return d ? '+' + d : '';
+}
+const nombreConv = (c) => (c && (c.nombre || c.nombre_wa)) || fmtTel(c && c.wa_id);
+const nombreDe = (email) => { const u = TEAM.find((t) => String(t.email).toLowerCase() === String(email || '').toLowerCase()); return u ? u.nombre_visible : (email || ''); };
+const pesos = (n) => n === null || n === undefined || n === '' ? '-' : '$' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+const dt = (s) => (s ? new Date(s) : null);
+function hora(s) { const d = dt(s); return d ? d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : ''; }
+function cuando(s) {
+  const d = dt(s); if (!d) return '';
+  const hoy = new Date(); const ay = new Date(); ay.setDate(hoy.getDate() - 1);
+  if (d.toDateString() === hoy.toDateString()) return hora(s);
+  if (d.toDateString() === ay.toDateString()) return 'ayer';
+  if ((hoy - d) < 6 * 864e5) return d.toLocaleDateString('es-AR', { weekday: 'short' });
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+function dia(s) {
+  const d = dt(s); const hoy = new Date(); const ay = new Date(); ay.setDate(hoy.getDate() - 1);
+  if (d.toDateString() === hoy.toDateString()) return 'Hoy';
+  if (d.toDateString() === ay.toDateString()) return 'Ayer';
+  return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+const fechaDMA = (s) => (s ? String(s).slice(0, 10).split('-').reverse().join('/') : '');
+const fechaHora = (s) => (s ? new Date(s).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '');
+function linkify(t) { return esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\*([^*\n]+)\*/g, '<b>$1</b>'); }
+function csv(nombre, filas) {
+  const out = filas.map((f) => f.map((c) => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + out], { type: 'text/csv' })); a.download = nombre; a.click();
+}
+function ls(k, v) { try { if (v === undefined) return localStorage.getItem('fielpet_' + k); localStorage.setItem('fielpet_' + k, v); } catch (e) { return null; } }
+function beep() { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(); const g = c.createGain(); o.frequency.value = 880; g.gain.value = 0.06; o.connect(g); g.connect(c.destination); o.start(); setTimeout(() => { o.stop(); c.close(); }, 160); } catch (e) {} }
+function modal(html, onReady) {
+  $('modal-root').innerHTML = `<div class="ovl" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+  if (onReady) onReady();
+}
+function closeModal() { $('modal-root').innerHTML = ''; }
+function confirmar(titulo, texto, boton, fn, peligro) {
+  modal(`<h3>${esc(titulo)}</h3><div class="desc">${texto}</div><div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn ${peligro ? 'danger' : ''}" id="m-ok">${esc(boton)}</button></div>`,
+    () => ($('m-ok').onclick = async () => { $('m-ok').disabled = true; await fn(); closeModal(); }));
+}
+
+// =====================================================================
+//  BANDEJA
+// =====================================================================
+async function loadConvs() {
+  try { CONVS = await db.sel('fielpet_bandeja', { order: 'ultimo_msg_at', desc: true, limit: 600 }); }
+  catch (e) { $('convs').innerHTML = `<div class="empty-chat" style="padding:40px">No se pudieron leer las conversaciones.<br>${esc(e.message)}</div>`; return; }
+  renderList();
+  if (SEL) renderChatHead();
+}
+const esMia = (c) => c.estado === 'tomada' && String(c.tomada_por).toLowerCase() === ME.email.toLowerCase();
+function chipEstado(c) {
+  if (c.estado === 'tomada') return esMia(c) ? (c.derivada_por ? `<span class="chip mine">Te la pasó ${esc(nombreDe(c.derivada_por))}</span>` : '<span class="chip mine">Tomada por vos</span>') : `<span class="chip other">${esc(nombreDe(c.tomada_por))}</span>`;
+  if (c.estado === 'esperando') return `<span class="chip esp">Espera a una persona${c.motivo ? ' · ' + esc(String(c.motivo).replace('_', ' ')) : ''}</span>`;
+  if (c.estado === 'cerrada') return '<span class="chip closed">Cerrada</span>';
+  return '<span class="chip bot">Bot</span>';
+}
+function renderList() {
+  const q = ($('q').value || '').toLowerCase().trim();
+  const cnt = { todas: CONVS.length, esperando: CONVS.filter((c) => c.estado === 'esperando').length, mias: CONVS.filter(esMia).length,
+    bot: CONVS.filter((c) => c.estado === 'bot').length, tomadas: CONVS.filter((c) => c.estado === 'tomada').length, cerradas: CONVS.filter((c) => c.estado === 'cerrada').length };
+  const L = { todas: 'Todas', esperando: 'Esperando', mias: 'Mías', bot: 'Con el bot', tomadas: 'Tomadas', cerradas: 'Cerradas' };
+  $('filt').innerHTML = Object.keys(L).map((k) => `<button class="${FILTER === k ? 'on' : ''}" onclick="FILTER='${k}';renderList()">${L[k]} <b>${cnt[k]}</b></button>`).join('');
+  let lista = CONVS.filter((c) => FILTER === 'todas' || (FILTER === 'mias' ? esMia(c) : FILTER === 'tomadas' ? c.estado === 'tomada' : FILTER === 'cerradas' ? c.estado === 'cerrada' : c.estado === FILTER));
+  if (q) lista = lista.filter((c) => (nombreConv(c) + ' ' + c.wa_id + ' ' + (c.ultimo_msg_txt || '') + ' ' + (c.etiquetas || []).join(' ')).toLowerCase().includes(q));
+  if (FILTER === 'todas') lista = [...lista].sort((a, b) => (b.estado === 'esperando') - (a.estado === 'esperando') || new Date(b.ultimo_msg_at || 0) - new Date(a.ultimo_msg_at || 0));
+  const pend = cnt.esperando + CONVS.filter((c) => esMia(c) && c.no_leidos > 0).length;
+  $('nb').textContent = pend; $('nb').classList.toggle('hidden', !pend);
+  if (!lista.length) { $('convs').innerHTML = `<div class="empty-chat" style="padding:40px">${q ? 'Sin resultados.' : 'No hay conversaciones acá.'}</div>`; return; }
+  $('convs').innerHTML = lista.map((c) => {
+    const n = nombreConv(c);
+    const pre = c.ultimo_msg_emisor === 'bot' ? 'Bot: ' : c.ultimo_msg_emisor === 'vendedor' ? 'Equipo: ' : '';
+    return `<div class="conv ${c.wa_id === SEL ? 'sel' : ''} ${c.no_leidos > 0 ? 'unread' : ''} ${c.estado === 'esperando' ? 'esp' : ''}" onclick="openConv('${c.wa_id}')">
+      <span class="avatar" style="background:${colorDe(c.wa_id)}">${esc(iniciales(n))}</span>
+      <div class="meta"><div class="l1"><span class="nm">${esc(n)}</span><span class="tm">${cuando(c.ultimo_msg_at)}</span></div>
+      <div class="l2"><span class="pv">${esc(pre + (c.ultimo_msg_txt || ''))}</span>${c.no_leidos > 0 ? `<span class="cnt">${c.no_leidos}</span>` : ''}</div>
+      <div class="l3">${chipEstado(c)}${(c.etiquetas || []).slice(0, 3).map((e) => `<span class="chip">${esc(e)}</span>`).join('')}</div></div></div>`;
+  }).join('');
+}
+const cur = () => CONVS.find((c) => c.wa_id === SEL);
+async function openConv(wa) {
+  SEL = wa; REPLY = null; PENDING = null;
+  document.body.classList.add('chat-open');
+  if (window.innerWidth <= 860) FICHA_OPEN = false;
+  go('inbox'); renderList();
+  $('chat').innerHTML = '<div class="empty-chat">Cargando…</div>';
+  await Promise.all([loadMsgs(), loadFicha()]);
+  const c = cur();
+  if (c && c.no_leidos > 0) { c.no_leidos = 0; renderList(); db.rpc('fielpet_marcar_leido', { p_wa_id: wa }).catch(() => {}); }
+}
+function closeConv() { document.body.classList.remove('chat-open'); SEL = null; renderList(); }
+
+async function loadMsgs(silencioso) {
+  const wa = SEL; if (!wa) return;
+  const [m, e] = await Promise.all([db.sel('fielpet_mensajes', { eq: { wa_id: wa }, order: 'id', desc: true, limit: 400 }), db.sel('fielpet_eventos', { eq: { wa_id: wa }, order: 'creado', desc: true, limit: 100 }).catch(() => [])]);
+  if (wa !== SEL) return;
+  MSGS = m.reverse(); EVENTOS = e.reverse();
+  if (!$('msgs') || !silencioso) renderChat(); else renderMsgs();
+}
+function ventana() {
+  const ult = [...MSGS].reverse().find((m) => m.emisor === 'cliente');
+  if (!ult) return { abierta: false, resta: 0 };
+  const resta = new Date(ult.creado).getTime() + (24 * 60 - 5) * 60000 - Date.now();
+  return { abierta: resta > 0, resta };
+}
+function renderChat() {
+  const c = cur(); if (!c) { $('chat').innerHTML = '<div class="empty-chat">No se encontró la conversación.</div>'; return; }
+  $('chat').innerHTML = `<div class="ch" id="chathead"></div><div class="win hidden" id="win"></div><div class="msgs" id="msgs"></div><div id="bottom"></div>`;
+  renderChatHead(); renderMsgs(); renderBottom();
+}
+function renderChatHead() {
+  const c = cur(); if (!c || !$('chathead')) return;
+  const n = nombreConv(c); const mia = esMia(c);
+  let acc = '';
+  if (c.estado === 'tomada' && !mia) acc = esAdmin() ? `<button class="btn sm ghost" onclick="tomar()">Tomarla yo</button><button class="btn sm ghost" onclick="openCerrar()">Cerrar</button>` : '';
+  else if (mia) acc = `<button class="btn sm ghost" onclick="devolver()">Devolver al bot</button><button class="btn sm ghost" onclick="openDerivar()">Derivar</button><button class="btn sm ghost" onclick="openCerrar()">Cerrar</button>`;
+  else acc = `<button class="btn sm" onclick="tomar()">Tomar conversación</button>`;
+  $('chathead').innerHTML = `<button class="ibtn back" onclick="closeConv()">${I.back}</button>
+    <span class="avatar" style="background:${colorDe(c.wa_id)}">${esc(iniciales(n))}</span>
+    <div class="who"><b>${esc(n)}</b><span>${esc(fmtTel(c.wa_id))} · ${chipEstado(c)}</span></div>
+    <div class="row">${acc}<button class="ibtn" title="Ficha del cliente" onclick="toggleFicha()">${I.user}</button></div>`;
+  renderWindow();
+  renderBottom();
+}
+function renderWindow() {
+  const c = cur(); const w = $('win'); if (!c || !w) return;
+  if (!esMia(c)) { w.classList.add('hidden'); return; }
+  const v = ventana();
+  w.classList.remove('hidden');
+  if (v.abierta) { const h = Math.floor(v.resta / 36e5), m = Math.floor((v.resta % 36e5) / 6e4); w.className = 'win ok'; w.innerHTML = `${I.clock} Podés responder libremente durante ${h} h ${m} min más.`; }
+  else { w.className = 'win'; w.innerHTML = `${I.clock} Pasaron más de 24 h desde el último mensaje del cliente: para escribirle hay que usar una plantilla.`; }
+}
+const NOMBRE_EVENTO = { tomar: (e) => nombreDe(e.usuario) + ' tomó la conversación', devolver: (e) => nombreDe(e.usuario) + ' la devolvió al bot',
+  derivar: (e) => nombreDe(e.usuario) + ' se la pasó a ' + nombreDe((e.detalle || {}).para), cerrar: (e) => nombreDe(e.usuario) + ' cerró la conversación',
+  devolucion_automatica: () => 'Volvió al bot automáticamente', derivada_por_bot: (e) => 'El bot la derivó: ' + String((e.detalle || {}).tipo || '').replace('_', ' '),
+  enlace: (e) => 'Enlace de alta: ' + ({ vigente: 'generado', rechazado: 'rechazado por FielPet', conflicto: 'ya usado', error: 'falló', no_autorizado: 'falló', vencido: 'vencido' }[(e.detalle || {}).estado] || (e.detalle || {}).estado),
+  nueva: (e) => nombreDe(e.usuario) + ' inició la conversación' };
+function renderMsgs() {
+  const box = $('msgs'); if (!box) return;
+  const abajo = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  const items = [...MSGS.map((m) => ({ t: m.creado, m })), ...EVENTOS.filter((e) => NOMBRE_EVENTO[e.tipo]).map((e) => ({ t: e.creado, e }))]
+    .sort((a, b) => new Date(a.t) - new Date(b.t));
+  let html = '', ultDia = '';
+  for (const it of items) {
+    const d = dia(it.t); if (d !== ultDia) { html += `<div class="day">${esc(d)}</div>`; ultDia = d; }
+    if (it.e) { html += `<div class="sys">${esc(NOMBRE_EVENTO[it.e.tipo](it.e))} · ${hora(it.t)}</div>`; continue; }
+    html += burbuja(it.m);
+  }
+  if (!items.length) html = '<div class="empty-chat">Todavía no hay mensajes.</div>';
+  box.innerHTML = html;
+  hidratarMedia(box);
+  if (abajo || !box.dataset.ok) { box.scrollTop = box.scrollHeight; box.dataset.ok = '1'; }
+}
+function ticks(m) {
+  if (m.emisor === 'cliente' || m.emisor === 'sistema') return '';
+  if (m.estado_envio === 'fallido') return '<span class="fail" title="No se entregó">!</span>';
+  if (m.estado_envio === 'leido') return `<span class="rd">${I.check2}</span>`;
+  if (m.estado_envio === 'entregado') return I.check2;
+  if (m.estado_envio === 'enviado') return I.check;
+  return I.clock;
+}
+function burbuja(m) {
+  if (m.emisor === 'sistema') return `<div class="sys">${esc(m.texto)}</div>`;
+  const cls = m.emisor === 'cliente' ? 'in' : m.emisor === 'bot' ? 'botm' : 'out';
+  const who = m.emisor === 'bot' ? '<div class="who">Asistente</div>' : m.emisor === 'vendedor' ? `<div class="who">${esc(nombreDe(m.usuario) || 'Equipo')}</div>` : '';
+  let cuerpo = '';
+  if (m.respuesta_a) { const o = MSGS.find((x) => x.wamid === m.respuesta_a); if (o) cuerpo += `<div class="quote">${esc((o.texto || o.transcripcion || o.tipo).slice(0, 120))}</div>`; }
+  if (m.tipo === 'plantilla') cuerpo += '<div class="tpl">Plantilla</div>';
+  const borrado = m.extra && m.extra.archivo_borrado;
+  if (['imagen', 'video', 'gif', 'sticker', 'audio', 'documento'].includes(m.tipo)) {
+    if (m.media_path) cuerpo += `<div class="media" data-path="${esc(m.media_path)}" data-tipo="${m.tipo}" data-nombre="${esc(m.media_nombre || '')}"><div class="loading">Cargando ${m.tipo}…</div></div>`;
+    else if (m.tipo !== 'audio' || !m.transcripcion) cuerpo += `<div class="muted" style="font-size:12px">${borrado ? 'Archivo borrado al cerrar la conversación' : '(' + m.tipo + ' no disponible)'}</div>`;
+    if (m.tipo === 'audio' && m.transcripcion) cuerpo += `<div class="trans">“${esc(m.transcripcion)}”</div>`;
+    if (m.texto) cuerpo += `<div>${linkify(m.texto)}</div>`;
+  } else if (m.tipo === 'ubicacion') {
+    const x = m.extra || {};
+    cuerpo += `<a href="https://maps.google.com/?q=${x.lat},${x.lng}" target="_blank" rel="noopener">${I.pin} ${esc(m.texto || 'Ver ubicación')}</a>`;
+  } else cuerpo += linkify(m.texto || '');
+  const st = m.tipo === 'sticker' && m.media_path ? ' sticker' : '';
+  const rep = m.emisor === 'cliente' && m.wamid ? `<button class="ibtn rep" title="Responder a este mensaje" onclick="responderA(${m.id})">${I.reply}</button>` : '';
+  return `<div class="m ${cls}${st}">${rep}${who}${cuerpo}<div class="ft">${hora(m.creado)} ${ticks(m)}</div>${m.estado_envio === 'fallido' && m.error_envio ? `<div class="err">${esc(m.error_envio)}</div>` : ''}</div>`;
+}
+async function hidratarMedia(box) {
+  for (const el of box.querySelectorAll('.media[data-path]')) {
+    const path = el.dataset.path, tipo = el.dataset.tipo;
+    let url = SIGNED[path];
+    if (!url) { url = await db.signed(path); if (url) SIGNED[path] = url; }
+    if (!url) { el.innerHTML = '<div class="muted" style="font-size:12px">(no se pudo cargar el archivo)</div>'; continue; }
+    if (tipo === 'imagen') el.innerHTML = `<img class="im" src="${url}" onclick="lightbox('${url}')">`;
+    else if (tipo === 'sticker') el.innerHTML = `<img class="st" src="${url}">`;
+    else if (tipo === 'gif') el.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
+    else if (tipo === 'video') el.innerHTML = `<video src="${url}" controls preload="metadata"></video>`;
+    else if (tipo === 'audio') el.innerHTML = `<audio src="${url}" controls preload="metadata"></audio>`;
+    else el.innerHTML = `<a class="doc" href="${url}" target="_blank" rel="noopener">${I.doc}<span>${esc(el.dataset.nombre || 'Documento')}</span></a>`;
+    el.removeAttribute('data-path');
+  }
+}
+function lightbox(url) { $('modal-root').innerHTML = `<div class="lightbox" onclick="closeModal()"><img src="${url}"></div>`; }
+
+// ---------- abajo: composer o aviso ----------
+function renderBottom() {
+  const c = cur(); const b = $('bottom'); if (!c || !b) return;
+  if (!esMia(c)) {
+    const txt = c.estado === 'tomada' ? `La está atendiendo ${esc(nombreDe(c.tomada_por))}.` : c.estado === 'esperando' ? 'El bot la derivó y espera a una persona. Tomala para responder.' : 'El bot está atendiendo. Si la tomás, el bot deja de responder.';
+    b.innerHTML = `<div class="lockbar"><span>${txt}</span>${c.estado === 'tomada' && !esAdmin() ? '' : `<button class="btn sm" onclick="tomar()">Tomar conversación</button>`}</div>`;
+    return;
+  }
+  if (!ventana().abierta) { b.innerHTML = `<div class="lockbar"><span>La ventana de 24 h está cerrada.</span><button class="btn sm" onclick="openPlantilla()">Enviar plantilla</button></div>`; return; }
+  b.innerHTML = `<div id="replying"></div><div id="pending"></div>
+    <div class="recbar hidden" id="rec-bar"><span class="dotrec"></span><b id="rec-time">0:00</b><span class="muted grow">Grabando nota de voz…</span><button class="btn sm ghost" onclick="cancelRecording()">Cancelar</button><button class="btn sm" onclick="stopRecording()">Listo</button></div>
+    <div class="composer">
+      <div class="pop emojis hidden" id="emojis"></div><div class="pop rapidas hidden" id="rapidas"></div>
+      <button class="ibtn" title="Emojis" onclick="toggleEmojis()">${I.smile}</button>
+      <button class="ibtn" title="Adjuntar foto, video o documento" onclick="$('file').click()">${I.clip}</button>
+      <input type="file" id="file" class="hidden" accept="image/jpeg,image/png,video/mp4,application/pdf,.doc,.docx,.xls,.xlsx,audio/ogg,audio/mpeg" onchange="pickFile(this)">
+      <textarea id="txt" rows="1" placeholder="Escribí un mensaje (/ para respuestas rápidas)" onkeydown="txtKey(event)" oninput="txtInput(this)"></textarea>
+      <button class="ibtn" id="btn-mic" title="Nota de voz" onclick="toggleRecord()">${I.mic}</button>
+      <button class="ibtn" id="btn-send" title="Enviar" onclick="enviar()" style="color:var(--verde)">${I.send}</button>
+    </div>`;
+  renderReply(); renderPending();
+}
+function responderA(id) { const m = MSGS.find((x) => x.id === id); if (!m || !esMia(cur())) return toast('Tomá la conversación para responder.', true); REPLY = m; renderReply(); $('txt') && $('txt').focus(); }
+function renderReply() { const r = $('replying'); if (!r) return; r.innerHTML = REPLY ? `<div class="replying"><span class="q">${esc((REPLY.texto || REPLY.transcripcion || REPLY.tipo).slice(0, 140))}</span><button class="ibtn" onclick="REPLY=null;renderReply()">${I.x}</button></div>` : ''; }
+function renderPending() {
+  const p = $('pending'); if (!p) return;
+  if (!PENDING) { p.innerHTML = ''; return; }
+  const prev = PENDING.cat === 'imagen' ? `<img src="${URL.createObjectURL(PENDING.file)}">` : `<span class="chip">${esc(PENDING.cat)}</span>`;
+  p.innerHTML = `<div class="pending">${prev}<span class="grow">${esc(PENDING.nombre)} · ${(PENDING.file.size / 1048576).toFixed(1)} MB${PENDING.cat !== 'audio' ? ' · podés escribir un texto para acompañarlo' : ''}</span><button class="ibtn" onclick="PENDING=null;renderPending()">${I.x}</button></div>`;
+}
+function pickFile(inp) {
+  const f = inp.files[0]; inp.value = ''; if (!f) return;
+  const t = f.type || '';
+  const cat = t.startsWith('image/') ? 'imagen' : t.startsWith('video/') ? 'video' : t.startsWith('audio/') ? 'audio' : 'documento';
+  const max = cat === 'imagen' ? 5 : cat === 'documento' ? 100 : 16;
+  if (f.size > max * 1048576) return toast(`El archivo supera los ${max} MB que permite WhatsApp para ${cat}.`, true);
+  if (cat === 'imagen' && !/jpeg|png/.test(t)) return toast('WhatsApp acepta fotos JPG o PNG.', true);
+  PENDING = { file: f, cat, mime: t, nombre: f.name }; renderPending();
+}
+function txtInput(el) {
+  el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  const v = el.value;
+  if (v.startsWith('/')) showRapidas(v.slice(1).toLowerCase()); else $('rapidas').classList.add('hidden');
+}
+let RSEL = 0;
+function showRapidas(q) {
+  const box = $('rapidas'); const l = RAPIDAS.filter((r) => (r.atajo + ' ' + r.texto).toLowerCase().includes(q)).slice(0, 8);
+  if (!l.length) { box.innerHTML = '<div class="ritem muted">No hay respuestas rápidas con eso. Cargalas en Configuración.</div>'; box.classList.remove('hidden'); return; }
+  RSEL = Math.min(RSEL, l.length - 1);
+  box.innerHTML = l.map((r, i) => `<div class="ritem ${i === RSEL ? 'sel' : ''}" onclick="usarRapida(${r.id})"><b>/${esc(r.atajo)}</b>${esc(r.texto.slice(0, 120))}</div>`).join('');
+  box.dataset.ids = l.map((r) => r.id).join(',');
+  box.classList.remove('hidden');
+}
+function usarRapida(id) {
+  const r = RAPIDAS.find((x) => x.id === id); const t = $('txt'); if (!r || !t) return;
+  const c = cur(); const nombre = c ? String(c.nombre || c.nombre_wa || '').split(' ')[0] : '';
+  t.value = r.texto.replace(/\{nombre\}/g, nombre).replace(/\{usuario\}/g, ME.nombre_visible || ME.nombre || '');
+  $('rapidas').classList.add('hidden'); t.focus(); txtInput(t);
+}
+function txtKey(e) {
+  const box = $('rapidas');
+  if (!box.classList.contains('hidden') && box.dataset.ids) {
+    const ids = box.dataset.ids.split(',').map(Number);
+    if (e.key === 'ArrowDown') { e.preventDefault(); RSEL = (RSEL + 1) % ids.length; showRapidas($('txt').value.slice(1).toLowerCase()); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); RSEL = (RSEL - 1 + ids.length) % ids.length; showRapidas($('txt').value.slice(1).toLowerCase()); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); usarRapida(ids[RSEL]); return; }
+    if (e.key === 'Escape') { box.classList.add('hidden'); return; }
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+}
+const EMOJIS = '😊🙂😉👍🙌👏🙏💚✅📄📷🐶🐱🐾❤️😅😃🤗👌✨📌⏰📞💬'.match(/\p{Extended_Pictographic}\uFE0F?/gu);
+function toggleEmojis() {
+  const e = $('emojis');
+  if (!e.innerHTML) e.innerHTML = EMOJIS.map((x) => `<button onclick="insertEmoji('${x}')">${x}</button>`).join('');
+  e.classList.toggle('hidden');
+}
+function insertEmoji(x) { const t = $('txt'); const p = t.selectionStart || t.value.length; t.value = t.value.slice(0, p) + x + t.value.slice(p); t.focus(); $('emojis').classList.add('hidden'); }
+
+async function enviar() {
+  if (SENDING) return;
+  const t = $('txt'); const texto = t ? t.value.trim() : '';
+  if (!PENDING && !texto) return;
+  const c = cur(); if (!c) return;
+  SENDING = true; $('btn-send') && ($('btn-send').disabled = true);
+  try {
+    let r;
+    if (PENDING) {
+      const safe = PENDING.nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]/g, '_').slice(-60);
+      const path = `panel/${c.wa_id}/${Date.now()}_${safe}`;
+      await db.upload(path, PENDING.file);
+      r = await db.n8n('archivo', { wa_id: c.wa_id, media_path: path, media_categoria: PENDING.cat, media_mime: PENDING.mime, media_nombre: PENDING.nombre, texto });
+    } else {
+      r = await db.n8n('responder', { wa_id: c.wa_id, texto, respuesta_a: REPLY ? REPLY.wamid : null });
+    }
+    if (r && r.ok) { if (t) { t.value = ''; txtInput(t); } PENDING = null; REPLY = null; renderPending(); renderReply(); }
+    else toast(errTxt(r && (r.error_envio || r.error)), true);
+  } catch (e) { toast('No se pudo enviar: ' + e.message, true); }
+  SENDING = false; $('btn-send') && ($('btn-send').disabled = false);
+  loadMsgs(true);
+}
+
+// ---------- nota de voz (ogg/opus para WhatsApp; si no se puede, mp3) ----------
+const OPUS_ENCODER = 'https://cdn.jsdelivr.net/npm/opus-recorder@8.0.5/dist/encoderWorker.min.js';
+let mediaRecorder = null, recChunks = [], recStream = null, isRecording = false, recTimer = null, recSeconds = 0, recEngine = null, opusRec = null, opusChunks = [], recCancelled = false;
+function startRecUI() { $('rec-bar').classList.remove('hidden'); $('btn-mic').classList.add('on'); recSeconds = 0; $('rec-time').textContent = '0:00';
+  recTimer = setInterval(() => { recSeconds++; $('rec-time').textContent = Math.floor(recSeconds / 60) + ':' + String(recSeconds % 60).padStart(2, '0'); }, 1000); }
+function finishRecUI() { isRecording = false; clearInterval(recTimer); if ($('rec-bar')) $('rec-bar').classList.add('hidden'); if ($('btn-mic')) $('btn-mic').classList.remove('on'); if (recStream) { recStream.getTracks().forEach((t) => t.stop()); recStream = null; } }
+function toggleRecord() { if (isRecording) stopRecording(); else startRecording(); }
+async function startRecording() {
+  PENDING = null; renderPending(); recCancelled = false;
+  if (window.Recorder) {
+    try {
+      opusChunks = [];
+      opusRec = new Recorder({ encoderPath: OPUS_ENCODER, numberOfChannels: 1, encoderSampleRate: 48000, streamPages: true, monitorGain: 0, recordingGain: 1 });
+      opusRec.ondataavailable = (b) => { if (b && b.length) opusChunks.push(new Uint8Array(b)); };
+      opusRec.onstop = () => { if (recCancelled || !opusChunks.length) return; const f = new File([new Blob(opusChunks, { type: 'audio/ogg' })], 'nota_voz_' + Date.now() + '.ogg', { type: 'audio/ogg' }); PENDING = { file: f, cat: 'audio', mime: 'audio/ogg', nombre: f.name }; renderPending(); };
+      await opusRec.start(); recEngine = 'opus'; isRecording = true; startRecUI(); return;
+    } catch (e) { opusRec = null; }
+  }
+  if (!navigator.mediaDevices || !window.MediaRecorder) return toast('Tu navegador no permite grabar audio.', true);
+  try { recStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { return toast('No pudimos acceder al micrófono. Revisá los permisos.', true); }
+  mediaRecorder = new MediaRecorder(recStream); recChunks = [];
+  mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+  mediaRecorder.onstop = async () => {
+    if (recCancelled || !recChunks.length) return;
+    try { const mp3 = await blobToMp3(new Blob(recChunks, { type: mediaRecorder.mimeType || 'audio/webm' }));
+      const f = new File([mp3], 'nota_voz_' + Date.now() + '.mp3', { type: 'audio/mpeg' }); PENDING = { file: f, cat: 'audio', mime: 'audio/mpeg', nombre: f.name }; renderPending();
+    } catch (e) { toast('No se pudo procesar el audio.', true); }
+  };
+  mediaRecorder.start(); recEngine = 'media'; isRecording = true; startRecUI();
+}
+function stopRecording() { if (recEngine === 'opus' && opusRec) { try { opusRec.stop(); } catch (e) {} } else if (mediaRecorder) { try { mediaRecorder.stop(); } catch (e) {} } finishRecUI(); }
+function cancelRecording() { recCancelled = true; stopRecording(); }
+async function blobToMp3(blob) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+  const l = buf.getChannelData(0), s = new Int16Array(l.length);
+  for (let i = 0; i < l.length; i++) { const v = Math.max(-1, Math.min(1, l[i])); s[i] = v < 0 ? v * 0x8000 : v * 0x7FFF; }
+  let rate = buf.sampleRate; if (![8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000].includes(rate)) rate = 44100; try { ctx.close(); } catch (e) {}
+  const enc = new lamejs.Mp3Encoder(1, rate, 128), out = [];
+  for (let i = 0; i < s.length; i += 1152) { const m = enc.encodeBuffer(s.subarray(i, i + 1152)); if (m.length) out.push(m); }
+  const end = enc.flush(); if (end.length) out.push(end);
+  return new Blob(out, { type: 'audio/mpeg' });
+}
+
+// ---------- tomar, devolver, derivar, cerrar ----------
+async function tomar() {
+  const c = cur(); if (!c) return;
+  const r = await db.rpc('fielpet_tomar', { p_wa_id: c.wa_id }).catch((e) => ({ ok: false, error: e.message }));
+  if (!r || !r.ok) return toast(errTxt(r && r.error), true);
+  Object.assign(c, { estado: 'tomada', tomada_por: ME.email, derivada_por: null });
+  renderList(); renderChatHead();
+  if (!r.ya_era_tuya) db.n8n('aviso_toma', { wa_id: c.wa_id }).then((x) => { if (x && x.ok === false && x.error !== 'sin_webhook') toast(errTxt(x.error), true); loadMsgs(true); });
+}
+function devolver() {
+  confirmar('Devolver al bot', 'El bot vuelve a responder en esta conversación. Lo que el cliente escribió mientras la tenías vos no se responde de nuevo.', 'Devolver', async () => {
+    const r = await db.rpc('fielpet_devolver_bot', { p_wa_id: SEL }).catch((e) => ({ ok: false, error: e.message }));
+    if (!r || !r.ok) return toast(errTxt(r && r.error), true);
+    toast('El bot vuelve a atender esta conversación.'); await loadConvs(); loadMsgs(true);
+  });
+}
+function openDerivar() {
+  const otros = TEAM.filter((t) => t.activo !== false && String(t.email).toLowerCase() !== ME.email.toLowerCase());
+  if (!otros.length) return toast('No hay otras personas en el equipo.', true);
+  modal(`<h3>Derivar conversación</h3><div class="desc">Le llega un aviso y la conversación pasa a ser suya.</div>
+    <label class="lbl">A quién</label><select class="inp" id="d-para">${otros.map((t) => `<option value="${esc(t.email)}">${esc(t.nombre_visible)}${t.rol === 'admin' ? ' (admin)' : ''}</option>`).join('')}</select>
+    <label class="lbl">Nota para esa persona (opcional)</label><textarea class="inp" id="d-nota" placeholder="Por ejemplo: quiere cambiar el plan de Luna"></textarea>
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="d-ok">Derivar</button></div>`,
+  () => ($('d-ok').onclick = async () => {
+    const r = await db.rpc('fielpet_derivar', { p_wa_id: SEL, p_para: $('d-para').value, p_nota: $('d-nota').value }).catch((e) => ({ ok: false, error: e.message }));
+    if (!r || !r.ok) return toast(errTxt(r && r.error), true);
+    closeModal(); toast('Conversación derivada.'); await loadConvs(); loadMsgs(true);
+  }));
+}
+function openCerrar() {
+  const v = ventana();
+  modal(`<h3>Cerrar conversación</h3><div class="desc">Si el cliente vuelve a escribir, lo atiende el bot. Se borran los stickers, GIF y audios ya transcriptos que mandó; las fotos y los documentos se conservan.</div>
+    ${v.abierta ? `<div class="switchrow"><span>Enviarle un mensaje de cierre</span><label class="toggle"><input type="checkbox" id="c-env" ${CFG.cierre_por_defecto !== 'false' ? 'checked' : ''}><span></span></label></div>
+    <textarea class="inp" id="c-txt">${esc((CFG.mensaje_cierre || '').replace(/\{nombre\}/g, String(nombreConv(cur())).split(' ')[0]))}</textarea>` : '<div class="alert warn">La ventana de 24 h está cerrada: se cierra sin avisarle al cliente.</div>'}
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="c-ok">Cerrar conversación</button></div>`,
+  () => ($('c-ok').onclick = async () => {
+    $('c-ok').disabled = true;
+    const r = await db.n8n('cerrar', { wa_id: SEL, enviar_mensaje: v.abierta && $('c-env') ? $('c-env').checked : false, texto: $('c-txt') ? $('c-txt').value : '' });
+    if (!r || r.ok === false) { $('c-ok').disabled = false; return toast(errTxt(r && r.error), true); }
+    closeModal(); toast('Conversación cerrada.'); await loadConvs(); loadMsgs(true);
+  }));
+}
+
+// ---------- plantillas ----------
+let PLANTILLAS = null;
+async function cargarPlantillas() {
+  if (PLANTILLAS) return PLANTILLAS;
+  const r = await db.n8n('plantillas');
+  if (!r || !r.ok) { toast(errTxt(r && r.error), true); return []; }
+  PLANTILLAS = (r.plantillas || []).filter((p) => p.estado === 'APPROVED');
+  return PLANTILLAS;
+}
+function formPlantilla(lista, pre) {
+  return `<label class="lbl">Plantilla aprobada</label><select class="inp" id="t-sel" onchange="pintarPlantilla()">${lista.map((p, i) => `<option value="${i}">${esc(p.nombre)} · ${esc(p.idioma)}</option>`).join('')}</select>
+    <div id="t-vars"></div><label class="lbl">Así le llega</label><div class="tplcard"><pre id="t-prev"></pre></div>`;
+}
+function pintarPlantilla(prefill) {
+  const p = PLANTILLAS[$('t-sel').value]; if (!p) return;
+  const n = p.variables;
+  const c = cur(); const nombre = prefill && prefill.nombre !== undefined ? prefill.nombre : (c ? String(c.nombre || c.nombre_wa || '').split(' ')[0] : '');
+  const def = (i) => (i === 0 ? nombre : i === 1 && c ? new Date(c.ultimo_cliente_at || c.ultimo_msg_at || Date.now()).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }) : '');
+  $('t-vars').innerHTML = n ? Array.from({ length: n }, (_, i) => `<label class="lbl">Variable {{${i + 1}}}</label><input class="inp tv" value="${esc(def(i))}" oninput="previewPlantilla()">`).join('') : '';
+  previewPlantilla();
+}
+function previewPlantilla() {
+  const p = PLANTILLAS[$('t-sel').value]; const vals = [...document.querySelectorAll('.tv')].map((x) => x.value);
+  $('t-prev').textContent = p.texto.replace(/\{\{(\d+)\}\}/g, (m, k) => vals[k - 1] || m) + (p.botones && p.botones.length ? '\n\n[ ' + p.botones.join(' ]  [ ') + ' ]' : '');
+}
+async function openPlantilla() {
+  const l = await cargarPlantillas();
+  if (!l.length) return toast('No hay plantillas aprobadas en la cuenta de WhatsApp.', true);
+  modal(`<h3>Enviar plantilla</h3><div class="desc">Para escribirle a alguien que no contestó en las últimas 24 horas. Si responde, se abre la ventana y seguís normal.</div>${formPlantilla(l)}
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="t-ok">Enviar</button></div>`,
+  () => { pintarPlantilla(); $('t-ok').onclick = async () => {
+    const p = PLANTILLAS[$('t-sel').value]; $('t-ok').disabled = true;
+    const r = await db.n8n('plantilla', { wa_id: SEL, plantilla: p.nombre, idioma: p.idioma, variables: [...document.querySelectorAll('.tv')].map((x) => x.value.trim()), texto_preview: $('t-prev').textContent });
+    if (!r || !r.ok) { $('t-ok').disabled = false; return toast(errTxt(r && (r.error_envio || r.error)), true); }
+    closeModal(); toast('Plantilla enviada.'); loadMsgs(true);
+  }; });
+}
+async function openNueva() {
+  const l = await cargarPlantillas();
+  if (!l.length) return toast('Para iniciar una conversación hace falta una plantilla aprobada.', true);
+  modal(`<h3>Nueva conversación</h3><div class="desc">WhatsApp solo deja escribir primero con una plantilla aprobada. La conversación queda tomada por vos.</div>
+    <div class="grid2"><div><label class="lbl">Celular (con código de área)</label><input class="inp" id="n-num" placeholder="341 555 1234"></div>
+    <div><label class="lbl">Nombre</label><input class="inp" id="n-nom" placeholder="Nombre del cliente" oninput="pintarPlantilla({nombre:this.value})"></div></div>
+    ${formPlantilla(l)}<div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="t-ok">Enviar</button></div>`,
+  () => { pintarPlantilla({ nombre: '' }); $('t-ok').onclick = async () => {
+    const p = PLANTILLAS[$('t-sel').value]; $('t-ok').disabled = true;
+    const r = await db.n8n('nueva', { numero: $('n-num').value, nombre: $('n-nom').value, plantilla: p.nombre, idioma: p.idioma,
+      variables: [...document.querySelectorAll('.tv')].map((x) => x.value.trim()), texto_preview: $('t-prev').textContent });
+    if (!r || !r.ok) { $('t-ok').disabled = false; return toast(errTxt(r && (r.error_envio || r.error)), true); }
+    closeModal(); toast('Plantilla enviada.'); await loadConvs(); if (r.wa_id) openConv(r.wa_id);
+  }; });
+}
+
+// =====================================================================
+//  FICHA DEL CLIENTE
+// =====================================================================
+function toggleFicha() { FICHA_OPEN = !FICHA_OPEN; $('ficha').classList.toggle('closed', !FICHA_OPEN); }
+async function loadFicha() {
+  const wa = SEL;
+  const lead = (await db.sel('fielpet_leads', { eq: { wa_id: wa } }))[0];
+  if (!lead) { FICHA = null; $('ficha').innerHTML = ''; return; }
+  const [personas, mascotas, gestiones, notas, pedidos] = await Promise.all([
+    db.sel('fielpet_personas', { eq: { lead_id: lead.id }, order: 'creado' }),
+    db.sel('fielpet_mascotas', { eq: { lead_id: lead.id }, order: 'creado' }),
+    db.sel('fielpet_gestiones', { eq: { lead_id: lead.id }, order: 'creado', desc: true, limit: 20 }),
+    db.sel('fielpet_notas', { eq: { wa_id: wa }, order: 'creado', desc: true, limit: 30 }),
+    db.sel('fielpet_pedidos_panel', { eq: { wa_id: wa }, order: 'creado', desc: true, limit: 20 }).catch(() => []),
+  ]);
+  if (wa !== SEL) return;
+  FICHA = { lead, personas, mascotas, gestiones, notas, pedidos };
+  renderFicha();
+}
+const v = (x) => (x === null || x === undefined || x === '' ? '<span class="falta">falta</span>' : esc(x));
+function kvPersona(p) {
+  const dom = [p.direccion, p.numero, p.piso ? 'piso ' + p.piso : '', p.departamento ? 'depto ' + p.departamento : ''].filter(Boolean).join(' ');
+  const rows = [['Nombre', [p.nombre, p.apellido].filter(Boolean).join(' ')], ['DNI', p.dni], ['Nacimiento', fechaDMA(p.fecha_nacimiento)],
+    ['Género', p.genero === 'M' ? 'Masculino' : p.genero === 'F' ? 'Femenino' : ''], ['Email', p.email], ['Celular', p.celular], ['Domicilio', dom],
+    ['Localidad', p.localidad_nombre ? p.localidad_nombre + ' (' + p.provincia + (p.codigo_postal ? ', CP ' + p.codigo_postal : '') + ')' : '']];
+  return `<div class="kv">${rows.map(([k, x]) => `<span class="k">${k}</span><span class="v ${x ? '' : 'falta'}">${x ? esc(x) : 'falta'}</span>`).join('')}</div>`;
+}
+const EST_VENTA = { nuevo: 'Nuevo', asesorando: 'Asesorando', cotizado: 'Cotizado', listo_para_cerrar: 'Listo para cerrar', derivado: 'Derivado', cerrado: 'Cerrado', perdido: 'Perdido' };
+const EST_MASCOTA = { en_charla: 'En charla', cotizada: 'Cotizada', link_enviado: 'Enlace enviado', derivada: 'Derivada', no_avanza: 'No avanza' };
+const EST_PEDIDO = { vigente: ['Vigente', 'ok'], vencido: ['Vencido', ''], conflicto: ['Ya usado', 'mine'], rechazado: ['Rechazado', 'err'], error: ['Falló', 'err'], no_autorizado: ['Falló', 'err'], preparado: ['Sin respuesta', 'esp'] };
+function chipPedido(e) { const x = EST_PEDIDO[e] || [e, '']; return `<span class="chip ${x[1]}">${esc(x[0])}</span>`; }
+function renderFicha() {
+  const f = FICHA; const el = $('ficha'); el.classList.toggle('closed', !FICHA_OPEN);
+  if (!f) { el.innerHTML = ''; return; }
+  const c = cur() || {}; const mia = esMia(c);
+  const yo = f.personas.find((p) => p.relacion === 'yo') || {};
+  const otros = f.personas.filter((p) => p.relacion !== 'yo');
+  const n = nombreConv(c);
+  el.innerHTML = `<div class="fhead"><span class="avatar" style="background:${colorDe(c.wa_id)}">${esc(iniciales(n))}</span><b>${esc(n)}</b>
+      <div class="muted" style="font-size:12px">${esc(fmtTel(c.wa_id))}${f.lead.nombre_wa && f.lead.nombre_wa !== n ? ' · en WhatsApp: ' + esc(f.lead.nombre_wa) : ''}</div>
+      <div style="margin-top:8px"><span class="chip ${f.lead.estado === 'listo_para_cerrar' ? 'ok' : ''}">${esc(EST_VENTA[f.lead.estado] || f.lead.estado)}</span> ${f.lead.interes ? `<span class="chip">Interés ${esc(f.lead.interes)}</span>` : ''}</div></div>
+    <div class="fsec"><div class="fh"><span class="caps">Quien escribe</span><button class="btn sm ghost" onclick="editPersona('${yo.id || ''}')">Editar</button></div>${kvPersona(yo)}</div>
+    ${otros.map((p) => `<div class="fsec"><div class="fh"><span class="caps">Titular: ${esc(p.relacion)}</span><button class="btn sm ghost" onclick="editPersona('${p.id}')">Editar</button></div>${kvPersona(p)}</div>`).join('')}
+    <div class="fsec"><div class="fh"><span class="caps">Mascotas (${f.mascotas.length})</span><button class="btn sm ghost" onclick="editMascota('')">Agregar</button></div>
+      ${f.mascotas.length ? f.mascotas.map((m) => {
+        const ped = f.pedidos.find((p) => p.mascota === m.nombre);
+        const tit = f.personas.find((p) => p.id === m.titular_id);
+        return `<div class="pet"><div class="pt"><b>${esc(m.nombre)}</b><span class="chip">${esc(EST_MASCOTA[m.estado] || m.estado)}</span></div>
+          <div class="kv"><span class="k">Animal</span><span class="v">${v(m.animal)}</span><span class="k">Raza</span><span class="v">${m.raza ? esc(m.raza) : m.raza_dicha ? '<span class="falta">"' + esc(m.raza_dicha) + '" (sin confirmar)</span>' : v(null)}</span>
+          <span class="k">Sexo</span><span class="v">${v(m.sexo === 'M' ? 'Macho' : m.sexo === 'H' ? 'Hembra' : '')}</span><span class="k">Color</span><span class="v">${v(m.color)}</span>
+          <span class="k">Nacimiento</span><span class="v">${m.fecha_nacimiento ? esc(fechaDMA(m.fecha_nacimiento)) + (m.fecha_aproximada ? ' (aprox.)' : '') : v(null)}</span>
+          <span class="k">Plan</span><span class="v">${m.plan_elegido ? 'Plan ' + m.plan_elegido + ' · ' + pesos(m.precio_mensual) + '/mes' : m.plan_recomendado ? 'Recomendado: Plan ' + m.plan_recomendado : '-'}</span>
+          ${m.enfermedades_previas ? `<span class="k">Antecedentes</span><span class="v">${esc(m.enfermedades_previas)}</span>` : ''}
+          ${tit && tit.relacion !== 'yo' ? `<span class="k">Titular</span><span class="v">${esc(tit.relacion)}</span>` : ''}</div>
+          ${ped ? `<div class="ped">Enlace ${chipPedido(ped.estado_actual)} ${ped.expires_at && ped.estado_actual === 'vigente' ? 'vence ' + esc(fechaHora(ped.expires_at)) : ''} · ${ped.creado_por === 'bot' ? 'lo generó el bot' : 'lo generó ' + esc(nombreDe(ped.creado_por))}</div>` : ''}
+          <div class="row" style="margin-top:8px"><button class="btn sm ghost" onclick="editMascota('${m.id}')">Editar</button>
+          ${mia ? `<button class="btn sm" onclick="generarEnlace('${esc(m.nombre)}')">${ped && ped.estado_actual === 'vigente' ? 'Reenviar enlace' : 'Generar enlace'}</button>` : ''}</div></div>`;
+      }).join('') : '<div class="muted" style="font-size:12.5px">Todavía ninguna.</div>'}</div>
+    <div class="fsec"><div class="fh"><span class="caps">Venta</span><button class="btn sm ghost" onclick="guardarVenta()">Guardar</button></div>
+      <div class="grid2"><div><label class="lbl">Etapa</label><select class="inp" id="fv-estado">${Object.entries(EST_VENTA).map(([k, x]) => `<option value="${k}" ${f.lead.estado === k ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+      <div><label class="lbl">Interés</label><select class="inp" id="fv-interes"><option value="">-</option>${['frio', 'tibio', 'caliente'].map((k) => `<option ${f.lead.interes === k ? 'selected' : ''}>${k}</option>`).join('')}</select></div></div>
+      <label class="lbl">Necesidades</label><textarea class="inp" id="fv-nec" rows="2">${esc(f.lead.necesidades || '')}</textarea>
+      <label class="lbl">Objeciones o dudas</label><textarea class="inp" id="fv-obj" rows="2">${esc(f.lead.objeciones || '')}</textarea>
+      <label class="lbl">Resumen para el equipo</label><textarea class="inp" id="fv-res" rows="2">${esc(f.lead.resumen_vendedor || '')}</textarea></div>
+    <div class="fsec"><div class="fh"><span class="caps">Gestiones</span></div>
+      ${f.gestiones.length ? f.gestiones.map((g) => `<div class="gest"><div class="row"><b class="grow">${esc(String(g.tipo).replace('_', ' '))}${g.mascota ? ' · ' + esc(g.mascota) : ''}</b>
+        <select class="inp" style="width:auto;padding:3px 6px;font-size:12px" onchange="estadoGestion('${g.id}',this.value)">${['abierta', 'link_enviado', 'derivada', 'resuelta', 'cerrada'].map((k) => `<option ${g.estado === k ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
+        ${g.detalle ? `<div style="margin-top:3px">${esc(g.detalle)}</div>` : ''}<div class="muted" style="font-size:11px;margin-top:2px">${esc(fechaHora(g.creado))}</div></div>`).join('') : '<div class="muted" style="font-size:12.5px">Ninguna.</div>'}</div>
+    <div class="fsec"><div class="fh"><span class="caps">Etiquetas</span></div>
+      <div class="row wrap">${(f.lead.etiquetas || []).map((e, i) => `<span class="chip">${esc(e)}<span class="x" onclick="quitarEtiqueta(${i})">×</span></span>`).join('')}
+      <input class="inp" style="width:130px;padding:4px 8px;font-size:12px" placeholder="+ etiqueta" onkeydown="if(event.key==='Enter'){agregarEtiqueta(this.value);this.value=''}"></div></div>
+    <div class="fsec"><div class="fh"><span class="caps">Notas internas</span></div>
+      <textarea class="inp" id="fn-txt" rows="2" placeholder="Solo las ve el equipo"></textarea><div class="savebar" style="margin-top:6px"><button class="btn sm" onclick="agregarNota()">Agregar nota</button></div>
+      ${f.notas.map((n2) => `<div class="note">${esc(n2.texto)}<div class="t">${esc(nombreDe(n2.autor))} · ${esc(fechaHora(n2.creado))}</div></div>`).join('')}</div>`;
+}
+async function guardarVenta() {
+  try { await db.upd('fielpet_leads', { id: FICHA.lead.id }, { estado: $('fv-estado').value, interes: $('fv-interes').value || null, necesidades: $('fv-nec').value || null,
+    objeciones: $('fv-obj').value || null, resumen_vendedor: $('fv-res').value || null, actualizado: new Date().toISOString() }); toast('Guardado.'); loadFicha(); loadConvs(); }
+  catch (e) { toast('No se pudo guardar: ' + e.message, true); }
+}
+async function estadoGestion(id, estado) { try { await db.upd('fielpet_gestiones', { id }, { estado, actualizado: new Date().toISOString() }); toast('Gestión actualizada.'); } catch (e) { toast(e.message, true); } }
+async function agregarEtiqueta(t) { t = t.trim(); if (!t) return; const e = [...(FICHA.lead.etiquetas || [])]; if (!e.includes(t)) e.push(t); await db.rpc('fielpet_etiquetas', { p_wa_id: SEL, p_etiquetas: e }); FICHA.lead.etiquetas = e; renderFicha(); loadConvs(); }
+async function quitarEtiqueta(i) { const e = [...(FICHA.lead.etiquetas || [])]; e.splice(i, 1); await db.rpc('fielpet_etiquetas', { p_wa_id: SEL, p_etiquetas: e }); FICHA.lead.etiquetas = e; renderFicha(); loadConvs(); }
+async function agregarNota() {
+  const t = $('fn-txt').value.trim(); if (!t) return;
+  try { await db.ins('fielpet_notas', { wa_id: SEL, texto: t, autor: ME.email }); loadFicha(); } catch (e) { toast('No se pudo guardar la nota: ' + e.message, true); }
+}
+async function generarEnlace(mascota) {
+  toast('Generando el enlace…');
+  const r = await db.n8n('enlace', { wa_id: SEL, mascota });
+  if (r && r.ok && !r.aviso) toast('Enlace enviado al cliente.');
+  else if (r && r.ok && r.aviso === 'ventana_cerrada') toast('Enlace generado, pero la ventana de 24 h está cerrada: mandale una plantilla primero y reenviá el enlace cuando conteste.', true);
+  else if (r && r.faltan && r.faltan.length) modal(`<h3>Faltan datos para el alta de ${esc(mascota)}</h3><div class="desc">Completalos en la ficha (o pedíselos al cliente) y volvé a intentar.</div><ul style="margin:6px 0 0 18px;line-height:1.7">${r.faltan.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><div class="acts"><button class="btn" onclick="closeModal()">Entendido</button></div>`);
+  else toast(errTxt(r && (r.error_envio || r.error)), true);
+  loadFicha(); loadMsgs(true);
+}
+
+// ---------- editar persona (con búsqueda de localidad) ----------
+function editPersona(id) {
+  const p = FICHA.personas.find((x) => x.id === id) || { relacion: 'yo' };
+  modal(`<h3>${p.relacion === 'yo' ? 'Datos de quien escribe' : 'Titular: ' + esc(p.relacion)}</h3><div class="desc">Son los datos que van al formulario de alta de FielPet.</div>
+    <div class="grid2"><div><label class="lbl">Nombre</label><input class="inp" id="p-nombre" value="${esc(p.nombre || '')}"></div><div><label class="lbl">Apellido</label><input class="inp" id="p-apellido" value="${esc(p.apellido || '')}"></div>
+    <div><label class="lbl">DNI</label><input class="inp" id="p-dni" inputmode="numeric" value="${esc(p.dni || '')}"></div><div><label class="lbl">Fecha de nacimiento</label><input class="inp" type="date" id="p-fn" value="${esc(p.fecha_nacimiento || '')}"></div>
+    <div><label class="lbl">Género</label><select class="inp" id="p-gen"><option value="">-</option><option value="M" ${p.genero === 'M' ? 'selected' : ''}>Masculino</option><option value="F" ${p.genero === 'F' ? 'selected' : ''}>Femenino</option></select></div>
+    <div><label class="lbl">Celular (10 dígitos)</label><input class="inp" id="p-cel" inputmode="numeric" value="${esc(p.celular || '')}"></div></div>
+    <label class="lbl">Email</label><input class="inp" id="p-email" type="email" value="${esc(p.email || '')}">
+    <div class="grid3"><div style="grid-column:span 2"><label class="lbl">Calle</label><input class="inp" id="p-dir" value="${esc(p.direccion || '')}"></div><div><label class="lbl">Número</label><input class="inp" id="p-num" value="${esc(p.numero || '')}"></div>
+    <div><label class="lbl">Piso</label><input class="inp" id="p-piso" value="${esc(p.piso || '')}"></div><div><label class="lbl">Depto</label><input class="inp" id="p-dep" value="${esc(p.departamento || '')}"></div></div>
+    <label class="lbl">Localidad</label><div class="row"><select class="inp" id="p-prov" style="width:45%">${PROVINCIAS.map((x) => `<option ${x === (p.provincia || 'Santa Fe') ? 'selected' : ''}>${x}</option>`).join('')}</select>
+    <input class="inp" id="p-locq" placeholder="Buscar localidad (o calle en CABA) / CP" value="${esc(p.localidad_nombre || '')}"><button class="btn sm ghost" onclick="buscarLoc()">Buscar</button></div>
+    <div id="p-locs" style="margin-top:6px"></div><input type="hidden" id="p-locid" value="${esc(p.localidad_id || '')}">
+    <div class="hint" id="p-locsel">${p.localidad_nombre ? 'Elegida: ' + esc(p.localidad_nombre) + ' (CP ' + esc(p.codigo_postal || '-') + ')' : 'Sin localidad elegida.'}</div>
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="p-ok">Guardar</button></div>`,
+  () => ($('p-ok').onclick = async () => {
+    const dni = $('p-dni').value.replace(/\D/g, ''); const cel = $('p-cel').value.replace(/\D/g, '');
+    if (dni && !/^\d{7,8}$/.test(dni)) return toast('El DNI tiene que tener 7 u 8 números.', true);
+    if (cel && !/^\d{10}$/.test(cel)) return toast('El celular va con código de área, sin 0 ni 15: 10 números.', true);
+    const loc = window._LOC || null;
+    const patch = { nombre: $('p-nombre').value.trim() || null, apellido: $('p-apellido').value.trim() || null, dni: dni ? dni.padStart(8, '0') : null,
+      fecha_nacimiento: $('p-fn').value || null, genero: $('p-gen').value || null, celular: cel || null, email: $('p-email').value.trim().toLowerCase() || null,
+      direccion: $('p-dir').value.trim() || null, numero: $('p-num').value.trim() || null, piso: $('p-piso').value.trim() || null, departamento: $('p-dep').value.trim() || null,
+      actualizado: new Date().toISOString() };
+    if (loc) Object.assign(patch, { localidad_id: loc.localidad_id, localidad_nombre: loc.localidad, provincia: loc.provincia, codigo_postal: loc.codigo_postal });
+    try { if (p.id) await db.upd('fielpet_personas', { id: p.id }, patch); else await db.ins('fielpet_personas', { ...patch, lead_id: FICHA.lead.id, relacion: 'yo' });
+      window._LOC = null; closeModal(); toast('Datos guardados.'); loadFicha(); loadConvs(); }
+    catch (e) { toast('No se pudo guardar: ' + e.message, true); }
+  }));
+  window._LOC = null;
+}
+async function buscarLoc() {
+  const t = $('p-locq').value.trim(); const cp = (t.match(/\b\d{4}\b/) || [])[0] || null; const txt = t.replace(/\b\d{4}\b/, '').trim();
+  const r = await db.rpc('fielpet_buscar_localidad', { p_provincia: $('p-prov').value, p_texto: txt, p_codigo_postal: cp }).catch(() => []);
+  window._LOCS = r || [];
+  $('p-locs').innerHTML = r && r.length ? r.map((l, i) => `<button class="chip" style="margin:2px;cursor:pointer" onclick="elegirLoc(${i})">${esc(l.localidad)} · CP ${esc(l.codigo_postal || '-')}</button>`).join('') : '<span class="muted" style="font-size:12px">Sin resultados. Probá con otra parte del nombre o el código postal.</span>';
+}
+function elegirLoc(i) { const l = window._LOCS[i]; window._LOC = l; $('p-locsel').textContent = 'Elegida: ' + l.localidad + ' (' + l.provincia + ', CP ' + (l.codigo_postal || '-') + ')'; $('p-locs').innerHTML = ''; }
+
+// ---------- editar mascota (raza del catálogo) ----------
+function editMascota(id) {
+  const m = FICHA.mascotas.find((x) => x.id === id) || { animal: 'Perro', estado: 'en_charla' };
+  const titulares = FICHA.personas;
+  modal(`<h3>${m.id ? esc(m.nombre) : 'Nueva mascota'}</h3>
+    <div class="grid2"><div><label class="lbl">Nombre</label><input class="inp" id="m-nombre" value="${esc(m.nombre || '')}"></div>
+    <div><label class="lbl">Animal</label><select class="inp" id="m-animal"><option ${m.animal === 'Perro' ? 'selected' : ''}>Perro</option><option ${m.animal === 'Gato' ? 'selected' : ''}>Gato</option></select></div>
+    <div><label class="lbl">Sexo</label><select class="inp" id="m-sexo"><option value="">-</option><option value="M" ${m.sexo === 'M' ? 'selected' : ''}>Macho</option><option value="H" ${m.sexo === 'H' ? 'selected' : ''}>Hembra</option></select></div>
+    <div><label class="lbl">Color</label><input class="inp" id="m-color" value="${esc(m.color || '')}"></div></div>
+    <label class="lbl">Raza (del catálogo de FielPet)</label><div class="row"><input class="inp" id="m-raza" value="${esc(m.raza || m.raza_dicha || '')}" placeholder="Escribí y buscá"><button class="btn sm ghost" onclick="buscarRaza()">Buscar</button></div>
+    <div id="m-razas" style="margin-top:6px"></div>
+    <div class="grid2"><div><label class="lbl">Fecha de nacimiento</label><input class="inp" type="date" id="m-fn" value="${esc(m.fecha_nacimiento || '')}"></div>
+    <div><label class="lbl">&nbsp;</label><label class="row" style="font-size:13px"><input type="checkbox" id="m-aprox" ${m.fecha_aproximada ? 'checked' : ''}> Es aproximada</label></div>
+    <div><label class="lbl">Plan elegido</label><select class="inp" id="m-plan"><option value="">-</option>${[1, 2, 3, 4, 5].map((k) => `<option value="${k}" ${m.plan_elegido == k ? 'selected' : ''}>Plan ${k}</option>`).join('')}</select></div>
+    <div><label class="lbl">Precio mensual</label><input class="inp" id="m-precio" inputmode="numeric" value="${esc(m.precio_mensual || '')}"></div>
+    <div><label class="lbl">Estado</label><select class="inp" id="m-estado">${Object.entries(EST_MASCOTA).map(([k, x]) => `<option value="${k}" ${m.estado === k ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+    <div><label class="lbl">Titular</label><select class="inp" id="m-tit">${titulares.map((p) => `<option value="${p.id}" ${m.titular_id === p.id || (!m.titular_id && p.relacion === 'yo') ? 'selected' : ''}>${esc(p.relacion === 'yo' ? 'Quien escribe' : p.relacion)}</option>`).join('')}</select></div></div>
+    <label class="lbl">Antecedentes de salud</label><textarea class="inp" id="m-enf" rows="2">${esc(m.enfermedades_previas || '')}</textarea>
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="m-ok">Guardar</button></div>`,
+  () => ($('m-ok').onclick = async () => {
+    const nombre = $('m-nombre').value.trim(); if (nombre.length < 2) return toast('Poné el nombre de la mascota.', true);
+    const raza = $('m-raza').value.trim();
+    let razaOk = null;
+    if (raza) { const r = await db.rpc('fielpet_buscar_raza', { p_animal: $('m-animal').value, p_texto: raza }).catch(() => []); const ex = (r || []).find((x) => Number(x.parecido) >= 1 || x.raza.toLowerCase() === raza.toLowerCase()); razaOk = ex ? ex.raza : null;
+      if (!razaOk) return toast('La raza tiene que ser una del catálogo: tocá "Buscar" y elegí una opción.', true); }
+    const patch = { nombre, animal: $('m-animal').value, sexo: $('m-sexo').value || null, color: $('m-color').value.trim() || null, raza: razaOk, raza_dicha: raza || null,
+      fecha_nacimiento: $('m-fn').value || null, fecha_aproximada: $('m-aprox').checked, plan_elegido: $('m-plan').value ? Number($('m-plan').value) : null,
+      precio_mensual: $('m-precio').value ? Number(String($('m-precio').value).replace(/\D/g, '')) : null, estado: $('m-estado').value, titular_id: $('m-tit').value || null,
+      enfermedades_previas: $('m-enf').value.trim() || null, actualizado: new Date().toISOString() };
+    try { if (m.id) await db.upd('fielpet_mascotas', { id: m.id }, patch); else await db.ins('fielpet_mascotas', { ...patch, lead_id: FICHA.lead.id });
+      closeModal(); toast('Mascota guardada.'); loadFicha(); }
+    catch (e) { toast('No se pudo guardar: ' + e.message, true); }
+  }));
+}
+async function buscarRaza() {
+  const r = await db.rpc('fielpet_buscar_raza', { p_animal: $('m-animal').value, p_texto: $('m-raza').value }).catch(() => []);
+  $('m-razas').innerHTML = r && r.length ? r.map((x) => `<button class="chip" style="margin:2px;cursor:pointer" onclick="$('m-raza').value='${esc(x.raza).replace(/'/g, "\\'")}';$('m-razas').innerHTML=''">${esc(x.raza)}</button>`).join('') : '<span class="muted" style="font-size:12px">No está en el catálogo. Si no se sabe o es cruza, usá Mestizo.</span>';
+}
+
+// =====================================================================
+//  Tiempo real y avisos
+// =====================================================================
+async function onConvChange(wa) {
+  if (!wa) return;
+  const r = (await db.sel('fielpet_bandeja', { eq: { wa_id: wa } }).catch(() => []))[0];
+  const i = CONVS.findIndex((c) => c.wa_id === wa);
+  if (r) { if (i >= 0) CONVS[i] = r; else CONVS.unshift(r); } else if (i >= 0) CONVS.splice(i, 1);
+  CONVS.sort((a, b) => new Date(b.ultimo_msg_at || 0) - new Date(a.ultimo_msg_at || 0));
+  renderList();
+  if (wa === SEL) renderChatHead();
+}
+let _msgT = null;
+function onMsgChange(m) { if (m && m.wa_id === SEL) { clearTimeout(_msgT); _msgT = setTimeout(() => loadMsgs(true), 300); } }
+async function loadNotifs() {
+  NOTIFS = await db.sel('fielpet_notificaciones', { order: 'creado', desc: true, limit: 60 }).catch(() => []);
+  renderNotifs();
+}
+const noLeida = (n) => !(n.leida_por || []).map((x) => String(x).toLowerCase()).includes(ME.email.toLowerCase());
+function renderNotifs() {
+  const nl = NOTIFS.filter(noLeida).length;
+  $('bdot').classList.toggle('hidden', !nl);
+  $('notif').innerHTML = `<div class="nh"><span>Avisos</span>${nl ? `<button class="btn sm ghost" onclick="leerNotifs()">Marcar leídos</button>` : ''}</div>` +
+    (NOTIFS.length ? NOTIFS.map((n) => `<div class="nitem ${noLeida(n) ? 'new' : ''}" onclick="${n.wa_id ? `openConv('${n.wa_id}');` : ''}toggleNotif(false)">${esc(n.texto)}<div class="t">${esc(fechaHora(n.creado))}</div></div>`).join('') : '<div class="nitem muted">Sin avisos.</div>');
+}
+function toggleNotif(abrir) { const n = $('notif'); const ab = abrir === undefined ? n.classList.contains('hidden') : abrir; n.classList.toggle('hidden', !ab); if (ab) renderNotifs(); }
+async function leerNotifs() { await db.rpc('fielpet_marcar_notificaciones').catch(() => {}); NOTIFS.forEach((n) => (n.leida_por = [...(n.leida_por || []), ME.email])); renderNotifs(); }
+function onNotif(n) {
+  if (!n || (n.para && String(n.para).toLowerCase() !== ME.email.toLowerCase())) return;
+  NOTIFS.unshift(n); renderNotifs();
+  if (ls('sonido') !== 'no') beep();
+  if (ls('notif') === 'si' && window.Notification && Notification.permission === 'granted' && document.hidden) { try { new Notification('FielPet', { body: n.texto }); } catch (e) {} }
+}
+document.addEventListener('click', (e) => { if (!e.target.closest('.bell')) $('notif') && $('notif').classList.add('hidden'); if (!e.target.closest('.composer')) { $('emojis') && $('emojis').classList.add('hidden'); } });
+
+// =====================================================================
+//  ALTAS (pedidos de enlace)
+// =====================================================================
+let PEDIDOS = [];
+async function loadPedidos() { PEDIDOS = await db.sel('fielpet_pedidos_panel', { order: 'creado', desc: true, limit: 1000 }).catch(() => []); renderPedidos(); }
+function renderPedidos() {
+  const q = ($('pq').value || '').toLowerCase(); const f = $('pf').value;
+  let l = PEDIDOS.filter((p) => (!f || p.estado_actual === f || (f === 'error' && ['error', 'no_autorizado', 'preparado'].includes(p.estado_actual))) && (!q || ((p.cliente || '') + ' ' + (p.mascota || '') + ' ' + p.wa_id).toLowerCase().includes(q)));
+  $('ptbl').innerHTML = `<tr><th>Fecha</th><th>Cliente</th><th>Mascota</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Lo generó</th><th>Entorno</th></tr>` +
+    (l.length ? l.map((p) => `<tr class="click" onclick="openConv('${p.wa_id}')"><td>${esc(fechaHora(p.creado))}</td><td>${esc(p.cliente || fmtTel(p.wa_id))}</td><td>${esc(p.mascota || '-')}${p.animal ? ' <span class="muted">(' + esc(p.animal) + ')</span>' : ''}</td>
+      <td>${p.plan_elegido ? 'Plan ' + p.plan_elegido : '<span class="muted">lo elige en la web</span>'}</td><td>${chipPedido(p.estado_actual)}</td><td>${p.estado_actual === 'vigente' ? esc(fechaHora(p.expires_at)) : '-'}</td>
+      <td>${p.creado_por === 'bot' ? 'Bot' : esc(nombreDe(p.creado_por))}</td><td>${esc(p.entorno)}</td></tr>`).join('') : '<tr><td colspan="8" class="muted" style="padding:24px;text-align:center">Todavía no hay enlaces generados.</td></tr>');
+}
+function exportPedidos() { csv('fielpet_altas.csv', [['Fecha', 'Cliente', 'WhatsApp', 'Mascota', 'Animal', 'Plan', 'Estado', 'Vence', 'Generado por', 'Entorno'], ...PEDIDOS.map((p) => [fechaHora(p.creado), p.cliente, p.wa_id, p.mascota, p.animal, p.plan_elegido, p.estado_actual, p.expires_at ? fechaHora(p.expires_at) : '', p.creado_por === 'bot' ? 'Bot' : nombreDe(p.creado_por), p.entorno])]); }
+
+// =====================================================================
+//  CONTACTOS
+// =====================================================================
+let CONTACTOS = [], MASCOTAS_TODAS = [];
+async function loadContactos() {
+  [MASCOTAS_TODAS] = await Promise.all([db.sel('fielpet_mascotas', { cols: 'lead_id,nombre,animal,estado,plan_elegido' }).catch(() => [])]);
+  await loadConvs(); renderContactos();
+}
+function renderContactos() {
+  const q = ($('cq').value || '').toLowerCase(); const f = $('cf').value;
+  const masc = (lid) => MASCOTAS_TODAS.filter((m) => m.lead_id === lid);
+  CONTACTOS = CONVS.map((c) => ({ ...c, mascotas: masc(c.lead_id) }));
+  const l = CONTACTOS.filter((c) => (!f || c.estado_venta === f) && (!q || (nombreConv(c) + ' ' + c.wa_id + ' ' + c.mascotas.map((m) => m.nombre).join(' ') + ' ' + (c.etiquetas || []).join(' ')).toLowerCase().includes(q)));
+  $('ctbl').innerHTML = `<tr><th>Nombre</th><th>WhatsApp</th><th>Mascotas</th><th>Etapa</th><th>Etiquetas</th><th>Último mensaje</th><th>Conversación</th></tr>` +
+    (l.length ? l.map((c) => `<tr class="click" onclick="openConv('${c.wa_id}')"><td><b>${esc(nombreConv(c))}</b></td><td>${esc(fmtTel(c.wa_id))}</td>
+      <td>${c.mascotas.map((m) => esc(m.nombre) + (m.animal ? ' <span class="muted">(' + esc(m.animal) + ')</span>' : '')).join(', ') || '-'}</td>
+      <td><span class="chip ${c.estado_venta === 'listo_para_cerrar' ? 'ok' : ''}">${esc(EST_VENTA[c.estado_venta] || c.estado_venta)}</span></td>
+      <td>${(c.etiquetas || []).map((e) => `<span class="chip">${esc(e)}</span>`).join(' ')}</td><td>${esc(cuando(c.ultimo_msg_at))}</td><td>${chipEstado(c)}</td></tr>`).join('') : '<tr><td colspan="7" class="muted" style="padding:24px;text-align:center">Sin resultados.</td></tr>');
+}
+function exportContactos() { csv('fielpet_contactos.csv', [['Nombre', 'WhatsApp', 'Mascotas', 'Etapa', 'Etiquetas', 'Último mensaje'], ...CONTACTOS.map((c) => [nombreConv(c), c.wa_id, c.mascotas.map((m) => m.nombre).join(', '), EST_VENTA[c.estado_venta] || c.estado_venta, (c.etiquetas || []).join(', '), fechaHora(c.ultimo_msg_at)])]); }
+
+// =====================================================================
+//  MÉTRICAS
+// =====================================================================
+let MDIAS = 30;
+async function loadMetricas() {
+  $('mdias').innerHTML = [7, 30, 90, 365].map((d) => `<button class="${MDIAS === d ? 'on' : ''}" onclick="MDIAS=${d};loadMetricas()">${d === 365 ? '12 meses' : d + ' días'}</button>`).join('');
+  const m = await db.rpc('fielpet_metricas', { p_dias: MDIAS }).catch(() => null);
+  if (!m || m.error) { $('kpis').innerHTML = '<div class="muted">No se pudieron leer las métricas.</div>'; return; }
+  const conv = m.personas ? Math.round((m.personas_con_enlace / m.personas) * 100) : 0;
+  const der = Object.values(m.derivaciones || {}).reduce((a, b) => a + b, 0);
+  const K = [['Personas que escribieron', m.personas, m.nuevos + ' nuevas'], ['Enlaces de alta', m.enlaces_generados, conv + '% de las personas recibió uno'],
+    ['Derivadas al equipo', der, m.tomadas + ' tomadas desde el panel'], ['Tiempo hasta tomarla', m.minutos_hasta_tomar_mediana === null ? '-' : m.minutos_hasta_tomar_mediana + ' min', 'mediana, desde que el bot deriva'],
+    ['Mensajes del equipo', m.mensajes_panel, 'enviados desde el panel'], ['Enlaces con error', m.enlaces_con_error, 'rechazados o sin respuesta de FielPet']];
+  $('kpis').innerHTML = K.map(([t, n, s]) => `<div class="kpi"><div class="caps">${t}</div><div class="n">${n ?? 0}</div><div class="s">${s}</div></div>`).join('');
+  const dias = m.por_dia || []; const max = Math.max(1, ...dias.map((d) => d.personas));
+  $('mbars').innerHTML = dias.length ? dias.map((d) => `<div class="b" style="height:${(d.personas / max) * 100}%" title="${fechaDMA(d.dia)}: ${d.personas} personas, ${d.enlaces} enlaces"><i style="height:${d.personas ? (d.enlaces / d.personas) * 100 : 0}%"></i></div>`).join('') : '<div class="muted">Sin datos en el período.</div>';
+  const H = {}; let hmax = 1; (m.por_hora || []).forEach((h) => { H[h.dow + '-' + h.hora] = h.personas; hmax = Math.max(hmax, h.personas); });
+  const DN = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  let heat = '<span></span>' + Array.from({ length: 24 }, (_, h) => `<span style="text-align:center">${h % 3 === 0 ? h : ''}</span>`).join('');
+  for (let d = 1; d <= 7; d++) { heat += `<span>${DN[d]}</span>`; for (let h = 0; h < 24; h++) { const x = H[d + '-' + h] || 0; heat += `<span class="c" title="${DN[d]} ${h} h: ${x}" style="${x ? `background:rgba(29,157,111,${0.15 + 0.85 * (x / hmax)})` : ''}"></span>`; } }
+  $('mheat').innerHTML = heat;
+  const D = Object.entries(m.derivaciones || {}).sort((a, b) => b[1] - a[1]); const dmax = Math.max(1, ...D.map((x) => x[1]));
+  $('mder').innerHTML = D.length ? D.map(([k, n]) => `<div class="row" style="margin:6px 0"><span style="width:130px">${esc(k.replace('_', ' '))}</span><div class="grow" style="background:var(--line2);border-radius:6px;height:12px"><div style="width:${(n / dmax) * 100}%;background:var(--verde);height:12px;border-radius:6px"></div></div><b style="width:30px;text-align:right">${n}</b></div>`).join('') : '<div class="muted">Sin derivaciones.</div>';
+}
+
+// =====================================================================
+//  CONFIGURACIÓN
+// =====================================================================
+const PANES = [['bot', 'Bot', true], ['horario', 'Horario y feriados', true], ['mensajes', 'Mensajes del equipo', true], ['precios', 'Planes y precios', true],
+  ['conocimiento', 'Conocimiento del bot', true], ['asistencias', 'Asistencias', true], ['contacto', 'Contacto y links', true], ['rapidas', 'Respuestas rápidas', false],
+  ['plantillas', 'Plantillas de WhatsApp', false], ['integracion', 'Integración FielPet', true], ['usuarios', 'Usuarios', true], ['cuenta', 'Mi cuenta', false]];
+let PANE = null;
+function renderConfig() {
+  const vis = PANES.filter((p) => !p[2] || esAdmin());
+  if (!PANE || !vis.find((p) => p[0] === PANE)) PANE = vis[0][0];
+  $('cfgnav').innerHTML = vis.map((p) => `<button class="${PANE === p[0] ? 'on' : ''}" onclick="cfgPane('${p[0]}')">${p[1]}</button>`).join('');
+  $('cfgpanes').innerHTML = '<div class="muted">Cargando…</div>';
+  (CFGP[PANE] || (() => ''))();
+}
+function cfgPane(p) { PANE = p; if (!document.getElementById('v-config').classList.contains('active')) go('config'); else renderConfig(); }
+const cv = (k, d = '') => esc(CFG[k] ?? d);
+const tgl = (id, on) => `<label class="toggle"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}><span></span></label>`;
+async function guardarCfg(pares) {
+  try { await db.ups('fielpet_config', Object.entries(pares).map(([clave, valor]) => ({ clave, valor: String(valor ?? ''), actualizado: new Date().toISOString() })), 'clave');
+    Object.assign(CFG, Object.fromEntries(Object.entries(pares).map(([k, x]) => [k, String(x ?? '')]))); botPill(); toast('Guardado. El bot lo usa desde el próximo mensaje.'); }
+  catch (e) { toast('No se pudo guardar: ' + e.message, true); }
+}
+const CFGP = {
+  bot() {
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Estado del bot</h3><div class="desc">Si lo apagás, responde solo el mensaje de mantenimiento (uno cada 6 horas por persona). Las conversaciones tomadas por una persona siguen igual.</div>
+      <div class="switchrow"><b>Bot activo</b>${tgl('b-act', CFG.bot_activo !== 'false')}</div>
+      <label class="lbl">Mensaje de mantenimiento</label><textarea class="inp" id="b-mant">${cv('mensaje_mantenimiento')}</textarea>
+      <label class="lbl">Mensaje si algo falla</label><input class="inp" id="b-err" value="${cv('mensaje_error')}"></div>
+      <div class="card"><h3>Indicaciones extra para el bot</h3><div class="desc">Texto libre que se suma a las instrucciones del bot. Sirve para ajustes puntuales (una promo vigente, algo que no tiene que decir, un cambio de tono). Escribilo como una indicación clara y corta. Lo que se contradiga con las reglas de privacidad o de datos del alta no se aplica.</div>
+      <textarea class="inp" id="b-ind" rows="6" placeholder="Ejemplo: Este mes no menciones la guardería por vacaciones porque está en revisión.">${cv('indicaciones_extra')}</textarea></div>
+      <div class="card"><h3>Ritmo de la charla</h3><div class="grid2"><div><label class="lbl">Segundos de espera antes de responder</label><input class="inp" id="b-seg" type="number" min="2" max="30" value="${cv('segundos_agrupar', 6)}"><div class="hint">Si la persona manda varios mensajes seguidos, el bot los responde juntos.</div></div>
+      <div><label class="lbl">Horas para considerar una charla nueva</label><input class="inp" id="b-hrs" type="number" min="1" max="72" value="${cv('horas_nueva_charla', 6)}"><div class="hint">Después de ese tiempo el bot vuelve a saludar.</div></div></div></div>
+      <div class="savebar"><button class="btn" onclick="guardarCfg({bot_activo:$('b-act').checked,mensaje_mantenimiento:$('b-mant').value,mensaje_error:$('b-err').value,indicaciones_extra:$('b-ind').value,segundos_agrupar:Math.max(2,Math.min(30,+$('b-seg').value||6)),horas_nueva_charla:Math.max(1,+$('b-hrs').value||6)})">Guardar cambios</button></div>`;
+  },
+  async horario() {
+    const fer = await db.sel('fielpet_feriados', { order: 'desde', desc: true }).catch(() => []);
+    const dias = String(CFG.horario_dias || '1,2,3,4,5').split(',');
+    const DN = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Horario de atención</h3><div class="desc">El bot lo usa para decir cuándo contacta una persona del equipo.</div>
+      <div class="days">${DN.map((d, i) => `<label><input type="checkbox" class="hd" value="${i + 1}" ${dias.includes(String(i + 1)) ? 'checked' : ''}>${d}</label>`).join('')}</div>
+      <div class="grid2" style="max-width:360px"><div><label class="lbl">Desde</label><input class="inp" type="time" id="h-d" value="${cv('horario_desde', '08:00')}"></div><div><label class="lbl">Hasta</label><input class="inp" type="time" id="h-h" value="${cv('horario_hasta', '16:30')}"></div></div>
+      <div class="savebar"><button class="btn" onclick="guardarCfg({horario_dias:[...document.querySelectorAll('.hd:checked')].map(x=>x.value).join(','),horario_desde:$('h-d').value,horario_hasta:$('h-h').value})">Guardar horario</button></div></div>
+      <div class="card"><h3>Feriados y recesos</h3><div class="desc">Esos días el bot avisa que no hay atención y cuándo vuelve el equipo.</div>
+      <div class="row wrap"><input class="inp" type="date" id="f-d" style="width:auto"><input class="inp" type="date" id="f-h" style="width:auto"><input class="inp grow" id="f-m" placeholder="Motivo (por ejemplo: Navidad)"><button class="btn sm" onclick="agregarFeriado()">Agregar</button></div>
+      <table class="tbl" style="margin-top:12px"><tr><th>Desde</th><th>Hasta</th><th>Motivo</th><th></th></tr>${fer.map((f) => `<tr><td>${fechaDMA(f.desde)}</td><td>${fechaDMA(f.hasta)}</td><td>${esc(f.motivo || '')}</td><td style="text-align:right"><button class="btn sm ghost" onclick="borrarFila('fielpet_feriados',${f.id})">Borrar</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Sin feriados cargados.</td></tr>'}</table></div>`;
+  },
+  mensajes() {
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Al tomar una conversación</h3><div class="desc">Se manda una vez, si la ventana de 24 h está abierta. Marcas: {nombre} del cliente, {usuario} quien la tomó.</div>
+      <div class="switchrow"><span>Avisarle al cliente que lo atiende una persona</span>${tgl('m-av', CFG.avisar_toma !== 'false')}</div><textarea class="inp" id="m-toma">${cv('mensaje_toma')}</textarea>
+      <label class="lbl">Devolver al bot si quien la tomó no responde en (horas, 0 = nunca)</label><input class="inp" type="number" min="0" id="m-dev" style="max-width:120px" value="${cv('devolver_bot_horas', 0)}"><div class="hint">Se aplica cuando el cliente vuelve a escribir.</div></div>
+      <div class="card"><h3>Al cerrar una conversación</h3><div class="desc">Se puede editar en el momento de cerrarla.</div>
+      <div class="switchrow"><span>Enviar mensaje de cierre por defecto</span>${tgl('m-cd', CFG.cierre_por_defecto !== 'false')}</div><textarea class="inp" id="m-cie">${cv('mensaje_cierre')}</textarea></div>
+      <div class="card"><h3>Avisos en este navegador</h3><div class="desc">Se guarda solo en esta computadora.</div>
+      <div class="switchrow"><span>Sonido cuando llega un aviso</span>${tgl('m-son', ls('sonido') !== 'no')}</div>
+      <div class="switchrow"><span>Notificación del navegador (aunque el panel esté en otra pestaña)</span>${tgl('m-not', ls('notif') === 'si')}</div></div>
+      <div class="savebar"><button class="btn" onclick="guardarMensajes()">Guardar cambios</button></div>`;
+  },
+  async precios() {
+    const [pl, pr] = await Promise.all([db.sel('fielpet_planes', { eq: { entorno: CFG.entorno || 'desarrollo' }, order: 'numero' }).catch(() => []), db.sel('fielpet_precios').catch(() => [])]);
+    const P = {}; pr.forEach((x) => (P[x.numero_plan + '|' + x.franja] = x.precio));
+    const FR = [['3m-10a', '3 meses a 10 años'], ['10a-13a', '10 a 13 años'], ['13a-18a', '13 a 18 años']];
+    const dif = pl.filter((x) => x.activo && x.numero && P[x.numero + '|3m-10a'] != null && Number(P[x.numero + '|3m-10a']) !== Number(x.costo));
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Planes en FielPet (${esc(CFG.entorno || 'desarrollo')})</h3><div class="desc">Se sincronizan solos cada hora desde la API de FielPet. No se editan acá.</div>
+      ${dif.length ? `<div class="alert warn">El precio de la API no coincide con la primera franja en: ${dif.map((x) => esc(x.nombre) + ' (API ' + pesos(x.costo) + ')').join(', ')}. Revisá la tabla de abajo.</div>` : ''}
+      <table class="tbl"><tr><th>Plan</th><th>id interno</th><th>Tope anual</th><th>Precio API</th><th>Estado</th><th>Sincronizado</th></tr>${pl.map((x) => `<tr><td><b>${esc(x.nombre)}</b></td><td>${x.id}</td><td>${pesos(x.suma_asegurada)}</td><td>${pesos(x.costo)}</td><td>${x.activo && x.visible ? '<span class="chip ok">Activo</span>' : '<span class="chip">Inactivo</span>'}</td><td>${esc(fechaHora(x.sincronizado))}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Todavía no se sincronizó. Corré el workflow "FielPet · Catálogos".</td></tr>'}</table></div>
+      <div class="card"><h3>Precio mensual por edad</h3><div class="desc">Lo usa el bot para cotizar. La API de FielPet trae un solo precio por plan; las otras franjas se cargan acá. Si una queda vacía, el bot no da precio para esa edad y deriva a un asesor.</div>
+      <table class="tbl"><tr><th>Plan</th>${FR.map((f) => `<th>${f[1]}</th>`).join('')}</tr>${[1, 2, 3, 4, 5].map((n) => `<tr><td><b>Plan ${n}</b></td>${FR.map((f) => `<td><input class="inp pr" data-k="${n}|${f[0]}" inputmode="numeric" value="${P[n + '|' + f[0]] ?? ''}" placeholder="-"></td>`).join('')}</tr>`).join('')}</table>
+      <div class="savebar"><button class="btn" onclick="guardarPrecios()">Guardar precios</button></div></div>`;
+  },
+  async conocimiento() {
+    const k = await db.sel('fielpet_conocimiento', { order: 'orden' }).catch(() => []);
+    const sec = k.filter((x) => x.tipo === 'seccion'), faq = k.filter((x) => x.tipo === 'faq');
+    window._K = k;
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Lo que sabe el bot de FielPet</h3><div class="desc">El bot solo responde con lo que está acá. Escribilo como se lo explicarías a un vendedor nuevo: claro y con los números exactos. Los cambios se usan desde el próximo mensaje.</div>
+      ${sec.map((s) => `<div class="kitem"><div class="kh"><input class="inp" id="k-t-${s.id}" value="${esc(s.titulo)}" style="font-weight:600">${tgl('k-a-' + s.id, s.activo)}</div><textarea class="inp" id="k-c-${s.id}" rows="4">${esc(s.contenido)}</textarea>
+        <div class="savebar" style="margin-top:6px"><button class="btn sm" onclick="guardarK(${s.id})">Guardar</button></div></div>`).join('')}</div>
+      <div class="card"><h3>Preguntas frecuentes</h3><div class="desc">Preguntas que hace la gente y cómo responderlas (por ejemplo, las del Word de FielPet).</div>
+      <div class="kitem"><input class="inp" id="kn-t" placeholder="Pregunta"><textarea class="inp" id="kn-c" rows="3" placeholder="Respuesta" style="margin-top:6px"></textarea><div class="savebar" style="margin-top:6px"><button class="btn sm" onclick="agregarFaq()">Agregar pregunta</button></div></div>
+      ${faq.map((s) => `<div class="kitem"><div class="kh"><input class="inp" id="k-t-${s.id}" value="${esc(s.titulo)}" style="font-weight:600">${tgl('k-a-' + s.id, s.activo)}</div><textarea class="inp" id="k-c-${s.id}" rows="3">${esc(s.contenido)}</textarea>
+        <div class="savebar" style="margin-top:6px"><button class="btn sm ghost" onclick="borrarFila('fielpet_conocimiento',${s.id})">Borrar</button><button class="btn sm" onclick="guardarK(${s.id})">Guardar</button></div></div>`).join('')}</div>`;
+  },
+  async asistencias() {
+    const a = await db.sel('fielpet_asistencias', { order: 'orden' }).catch(() => []);
+    const row = (x) => `<tr data-id="${x.id || ''}"><td><input class="inp a-cat" value="${esc(x.categoria || '')}"></td><td><input class="inp a-ser" value="${esc(x.servicio || '')}"></td><td><input class="inp a-mon" inputmode="numeric" value="${esc(x.monto ?? '')}"></td>
+      <td><input class="inp a-ev" inputmode="numeric" value="${esc(x.eventos ?? '')}" style="width:60px"></td><td><select class="inp a-per">${['', 'por año', 'por mes', 'único'].map((p) => `<option ${x.periodo === p ? 'selected' : ''}>${p}</option>`).join('')}</select></td>
+      <td><input class="inp a-not" value="${esc(x.nota || '')}"></td><td>${tgl('', x.activo !== false).replace('id=""', 'class="a-act"')}</td><td style="white-space:nowrap"><button class="btn sm" onclick="guardarAsistencia(this)">Guardar</button> ${x.id ? `<button class="btn sm ghost" onclick="borrarFila('fielpet_asistencias',${x.id})">Borrar</button>` : ''}</td></tr>`;
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Asistencias de BBVA incluidas</h3><div class="desc">El bot las usa como argumento de venta y para responder topes y cantidades. Categoría: por ejemplo "Mascota" u "Hogar".</div>
+      <div style="overflow:auto"><table class="tbl"><tr><th>Categoría</th><th>Servicio</th><th>Tope $</th><th>Veces</th><th>Período</th><th>Nota</th><th>Activa</th><th></th></tr>${a.map(row).join('')}${row({ activo: true })}</table></div></div>`;
+  },
+  contacto() {
+    const F = [['telefono_asistencias', 'Teléfono de asistencias (24 h)'], ['web', 'Página web'], ['app_android', 'App en Google Play'], ['app_ios', 'App en App Store'], ['mail_atencion', 'Mail de atención'], ['link_baja', 'Formulario de baja y eliminación de datos']];
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Contacto y links</h3><div class="desc">El bot los pasa solo cuando vienen al caso.</div>${F.map(([k, l]) => `<label class="lbl">${l}</label><input class="inp cf-l" data-k="${k}" value="${cv(k)}">`).join('')}
+      <div class="savebar"><button class="btn" onclick="guardarCfg(Object.fromEntries([...document.querySelectorAll('.cf-l')].map(x=>[x.dataset.k,x.value.trim()])))">Guardar</button></div></div>`;
+  },
+  rapidas() {
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Respuestas rápidas</h3><div class="desc">Textos guardados para responder más rápido. En el chat escribí / y elegí una. Marcas: {nombre} del cliente, {usuario} vos.</div>
+      <div class="grid2"><div><label class="lbl">Atajo</label><input class="inp" id="r-a" placeholder="carencias"></div></div><label class="lbl">Texto</label><textarea class="inp" id="r-t"></textarea>
+      <div class="savebar"><button class="btn" onclick="agregarRapida()">Guardar respuesta rápida</button></div>
+      <table class="tbl" style="margin-top:12px"><tr><th>Atajo</th><th>Texto</th><th></th></tr>${RAPIDAS.map((r) => `<tr><td><b>/${esc(r.atajo)}</b></td><td style="white-space:pre-wrap">${esc(r.texto)}</td><td style="text-align:right"><button class="btn sm ghost" onclick="borrarRapida(${r.id})">Borrar</button></td></tr>`).join('') || '<tr><td colspan="3" class="muted">Todavía no hay.</td></tr>'}</table></div>`;
+  },
+  async plantillas() {
+    PLANTILLAS = null;
+    $('cfgpanes').innerHTML = '<div class="card"><h3>Plantillas de WhatsApp</h3><div class="desc">Cargando desde Meta…</div></div>';
+    const r = await db.n8n('plantillas');
+    const l = r && r.ok ? r.plantillas : [];
+    const EST = { APPROVED: ['Aprobada', 'ok'], PENDING: ['En revisión', 'esp'], REJECTED: ['Rechazada', 'err'], PAUSED: ['Pausada', 'err'], DISABLED: ['Desactivada', 'err'] };
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Plantillas de WhatsApp</h3><div class="desc">Se crean y aprueban en Meta → WhatsApp Manager → Plantillas de mensajes. Acá se ven las de la cuenta de FielPet; solo las aprobadas se pueden enviar.</div>
+      ${r && r.ok ? '' : `<div class="alert warn">${esc(errTxt(r && r.error))}</div>`}
+      ${l.map((p) => `<div class="tplcard"><div class="row"><b class="grow">${esc(p.nombre)}</b><span class="chip">${esc(p.categoria)}</span><span class="chip">${esc(p.idioma)}</span><span class="chip ${(EST[p.estado] || ['', ''])[1]}">${esc((EST[p.estado] || [p.estado])[0])}</span></div><pre>${esc(p.texto)}${p.botones && p.botones.length ? '\n\n[ ' + p.botones.map(esc).join(' ]  [ ') + ' ]' : ''}</pre></div>`).join('') || '<div class="muted">No hay plantillas en la cuenta.</div>'}</div>
+      <div class="card"><h3>Plantillas sugeridas para crear</h3><div class="desc">Categoría Utilidad, idioma Español (ARG).</div>
+      <div class="tplcard"><b>fielpet_retomar_consulta</b><pre>Hola {{1}}, te escribimos de FielPet por tu consulta del {{2}}. ¿Seguimos por acá?</pre></div>
+      <div class="tplcard"><b>fielpet_enlace_vencido</b> · botones de respuesta rápida "Sí, generar otro" y "Ahora no"<pre>Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.</pre></div></div>`;
+  },
+  integracion() {
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Integración con FielPet</h3><div class="desc">A qué servidor de FielPet se mandan las altas. Para pasar a producción hay que cambiar estas dos cosas acá <b>y</b> la credencial "FielPet · API key" en n8n, y después correr "Cargar ahora" en el workflow de catálogos (los ids de planes y localidades cambian por entorno).</div>
+      <div class="grid2"><div><label class="lbl">Entorno</label><select class="inp" id="i-ent"><option value="desarrollo" ${CFG.entorno !== 'produccion' ? 'selected' : ''}>Desarrollo (pruebas)</option><option value="produccion" ${CFG.entorno === 'produccion' ? 'selected' : ''}>Producción</option></select></div>
+      <div><label class="lbl">URL base de la API</label><input class="inp" id="i-url" value="${cv('api_base_url')}"></div></div>
+      <label class="lbl">Código de vendedor del bot (opcional)</label><input class="inp" id="i-cod" value="${cv('codigo_vendedor')}" placeholder="Lo asigna FielPet"><div class="hint">Va en cada alta que genera el bot o el panel, para que FielPet sepa que vino por este canal.</div>
+      <div class="savebar"><button class="btn" onclick="confirmar('Guardar integración','Si cambiaste el entorno, revisá la credencial en n8n y volvé a cargar los catálogos.','Guardar',()=>guardarCfg({entorno:$('i-ent').value,api_base_url:$('i-url').value.trim().replace(/\\/+$/,''),codigo_vendedor:$('i-cod').value.trim()}))">Guardar</button></div></div>`;
+  },
+  async usuarios() {
+    const u = await db.sel('fielpet_usuarios', { order: 'email' }).catch(() => []);
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Usuarios del panel</h3><div class="desc">Administradores: todo. Vendedores: bandeja, altas, contactos, respuestas rápidas y su cuenta.</div>
+      <div class="savebar" style="margin:0 0 10px"><button class="btn sm" onclick="openUsuario()">Agregar usuario</button></div>
+      <table class="tbl"><tr><th>Email</th><th>Nombre visible</th><th>Rol</th><th>Activo</th><th></th></tr>${u.map((x) => `<tr><td>${esc(x.email)}</td><td><input class="inp u-n" data-e="${esc(x.email)}" value="${esc(x.nombre_visible || x.nombre || '')}"></td>
+        <td><select class="inp u-r" data-e="${esc(x.email)}"><option value="vendedor" ${x.rol === 'vendedor' ? 'selected' : ''}>Vendedor</option><option value="admin" ${x.rol === 'admin' ? 'selected' : ''}>Administrador</option></select></td>
+        <td>${tgl('', x.activo).replace('id=""', `class="u-a" data-e="${esc(x.email)}"`)}</td><td><button class="btn sm" onclick="guardarUsuario('${esc(x.email)}')">Guardar</button></td></tr>`).join('')}</table></div>`;
+  },
+  cuenta() {
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Mi cuenta</h3><div class="desc">${esc(ME.email)} · ${esAdmin() ? 'Administrador' : 'Vendedor'}</div>
+      <label class="lbl">Nombre que ven los clientes</label><div class="row"><input class="inp" id="a-n" value="${esc(ME.nombre_visible || ME.nombre || '')}"><button class="btn" onclick="guardarNombre()">Guardar</button></div><div class="hint">Se usa en el mensaje al tomar una conversación.</div></div>
+      <div class="card"><h3>Cambiar contraseña</h3><div class="desc">Mínimo 8 caracteres.</div><div class="grid2"><div><label class="lbl">Nueva contraseña</label><input class="inp" type="password" id="a-p1"></div><div><label class="lbl">Repetila</label><input class="inp" type="password" id="a-p2"></div></div>
+      <div class="savebar"><button class="btn" onclick="cambiarPass()">Cambiar contraseña</button></div></div>
+      ${esAdmin() ? '' : `<div class="card"><h3>Avisos en este navegador</h3><div class="switchrow"><span>Sonido cuando llega un aviso</span>${tgl('m-son', ls('sonido') !== 'no')}</div><div class="switchrow"><span>Notificación del navegador</span>${tgl('m-not', ls('notif') === 'si')}</div><div class="savebar"><button class="btn" onclick="guardarAvisosNav()">Guardar</button></div></div>`}`;
+  },
+};
+async function guardarMensajes() { guardarAvisosNav(true); await guardarCfg({ avisar_toma: $('m-av').checked, mensaje_toma: $('m-toma').value, devolver_bot_horas: Math.max(0, +$('m-dev').value || 0), cierre_por_defecto: $('m-cd').checked, mensaje_cierre: $('m-cie').value }); }
+async function guardarAvisosNav(silencio) {
+  ls('sonido', $('m-son').checked ? 'si' : 'no');
+  const quiere = $('m-not').checked;
+  if (quiere && window.Notification && Notification.permission !== 'granted') { const p = await Notification.requestPermission(); ls('notif', p === 'granted' ? 'si' : 'no'); if (p !== 'granted') toast('El navegador no dio permiso para notificar.', true); }
+  else ls('notif', quiere ? 'si' : 'no');
+  if (!silencio) toast('Guardado en este navegador.');
+}
+async function agregarFeriado() {
+  const d = $('f-d').value, h = $('f-h').value || $('f-d').value; if (!d) return toast('Elegí la fecha.', true); if (h < d) return toast('La fecha "hasta" no puede ser anterior.', true);
+  try { await db.ins('fielpet_feriados', { desde: d, hasta: h, motivo: $('f-m').value.trim() || null }); CFGP.horario(); } catch (e) { toast(e.message, true); }
+}
+function borrarFila(t, id) { confirmar('Borrar', 'Esto no se puede deshacer.', 'Borrar', async () => { try { await db.del(t, { id }); renderConfig(); } catch (e) { toast(e.message, true); } }, true); }
+async function guardarPrecios() {
+  const rows = [...document.querySelectorAll('.pr')].map((x) => { const [n, f] = x.dataset.k.split('|'); const val = String(x.value).replace(/\D/g, ''); return { numero_plan: +n, franja: f, precio: val ? +val : null, actualizado: new Date().toISOString() }; });
+  try { await db.ups('fielpet_precios', rows, 'numero_plan,franja'); toast('Precios guardados.'); CFGP.precios(); } catch (e) { toast(e.message, true); }
+}
+async function guardarK(id) { try { await db.upd('fielpet_conocimiento', { id }, { titulo: $('k-t-' + id).value.trim(), contenido: $('k-c-' + id).value.trim(), activo: $('k-a-' + id).checked, actualizado: new Date().toISOString() }); toast('Guardado.'); } catch (e) { toast(e.message, true); } }
+async function agregarFaq() {
+  const t = $('kn-t').value.trim(), c = $('kn-c').value.trim(); if (!t || !c) return toast('Completá la pregunta y la respuesta.', true);
+  try { await db.ins('fielpet_conocimiento', { tipo: 'faq', titulo: t, contenido: c, orden: 500 }); CFGP.conocimiento(); } catch (e) { toast(e.message, true); }
+}
+async function guardarAsistencia(btn) {
+  const tr = btn.closest('tr'); const g = (c) => tr.querySelector(c);
+  const row = { categoria: g('.a-cat').value.trim(), servicio: g('.a-ser').value.trim(), monto: g('.a-mon').value ? +String(g('.a-mon').value).replace(/\D/g, '') : null,
+    eventos: g('.a-ev').value ? +g('.a-ev').value : null, periodo: g('.a-per').value || null, nota: g('.a-not').value.trim() || null, activo: g('.a-act').checked };
+  if (!row.categoria || !row.servicio) return toast('Completá la categoría y el servicio.', true);
+  try { if (tr.dataset.id) await db.upd('fielpet_asistencias', { id: +tr.dataset.id }, row); else await db.ins('fielpet_asistencias', row); toast('Guardado.'); CFGP.asistencias(); } catch (e) { toast(e.message, true); }
+}
+async function agregarRapida() {
+  const a = $('r-a').value.trim().replace(/^\//, '').replace(/\s+/g, '_').toLowerCase(), t = $('r-t').value.trim(); if (!a || !t) return toast('Completá el atajo y el texto.', true);
+  try { await db.ins('fielpet_respuestas_rapidas', { atajo: a, texto: t }); RAPIDAS = await db.sel('fielpet_respuestas_rapidas', { order: 'atajo' }); CFGP.rapidas(); } catch (e) { toast(e.message.includes('duplicate') ? 'Ya existe ese atajo.' : e.message, true); }
+}
+async function borrarRapida(id) { try { await db.del('fielpet_respuestas_rapidas', { id }); RAPIDAS = RAPIDAS.filter((r) => r.id !== id); CFGP.rapidas(); } catch (e) { toast(e.message, true); } }
+function openUsuario() {
+  modal(`<h3>Agregar usuario</h3><div class="desc">Se crea el acceso con una contraseña temporal; la persona la puede cambiar en "Mi cuenta".</div>
+    <div class="grid2"><div><label class="lbl">Email</label><input class="inp" id="nu-e" type="email"></div><div><label class="lbl">Nombre</label><input class="inp" id="nu-n"></div>
+    <div><label class="lbl">Rol</label><select class="inp" id="nu-r"><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select></div><div><label class="lbl">Contraseña temporal</label><input class="inp" id="nu-p" value="${Math.random().toString(36).slice(2, 8)}Fp!${Math.floor(Math.random() * 90 + 10)}"></div></div>
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="nu-ok">Crear</button></div>`,
+  () => ($('nu-ok').onclick = async () => {
+    $('nu-ok').disabled = true;
+    const r = await db.n8n('usuario', { nuevo: { email: $('nu-e').value.trim(), nombre: $('nu-n').value.trim(), rol: $('nu-r').value, password: $('nu-p').value } });
+    if (!r || !r.ok) { $('nu-ok').disabled = false; return toast(errTxt(r && r.error), true); }
+    closeModal(); toast(r.ya_existia ? 'El login ya existía: quedó habilitado en el panel.' : 'Usuario creado. Pasale el email y la contraseña temporal.'); TEAM = await db.rpc('fielpet_equipo').catch(() => TEAM); CFGP.usuarios();
+  }));
+}
+async function guardarUsuario(email) {
+  const q = (c) => [...document.querySelectorAll(c)].find((x) => x.dataset.e === email);
+  if (email.toLowerCase() === ME.email.toLowerCase() && (!q('.u-a').checked || q('.u-r').value !== 'admin')) return toast('No podés quitarte el acceso de administrador a vos mismo.', true);
+  try { await db.upd('fielpet_usuarios', { email }, { nombre_visible: q('.u-n').value.trim() || null, rol: q('.u-r').value, activo: q('.u-a').checked }); toast('Usuario guardado.'); TEAM = await db.rpc('fielpet_equipo').catch(() => TEAM); }
+  catch (e) { toast(e.message, true); }
+}
+async function guardarNombre() { await db.rpc('fielpet_mi_nombre', { p_nombre: $('a-n').value }); ME.nombre_visible = $('a-n').value.trim(); $('me-name').textContent = ME.nombre_visible + (esAdmin() ? ' · admin' : ''); TEAM = await db.rpc('fielpet_equipo').catch(() => TEAM); toast('Nombre guardado.'); }
+async function cambiarPass() {
+  const a = $('a-p1').value, b = $('a-p2').value; if (a.length < 8) return toast('Mínimo 8 caracteres.', true); if (a !== b) return toast('Las contraseñas no coinciden.', true);
+  try { await db.password(a); $('a-p1').value = $('a-p2').value = ''; toast('Contraseña cambiada.'); } catch (e) { toast(e.message, true); }
+}
+
+init();
+
+</script>
+</body>
+</html>
