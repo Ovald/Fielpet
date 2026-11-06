@@ -150,7 +150,19 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
 .conv{display:flex;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line2);cursor:pointer;align-items:center}
 .conv:hover{background:var(--bg)}
 .conv.sel{background:#EBF1EF}
-.conv.esp{box-shadow:inset 3px 0 0 #F2A51B}
+.conv.esp,.conv.p-persona{box-shadow:inset 4px 0 0 #F2A51B}
+.conv.p-urgente{box-shadow:inset 4px 0 0 var(--err);background:#FFF7F6}
+.conv.p-urgente:hover{background:#FDEEEC}
+.conv.p-venta{box-shadow:inset 4px 0 0 var(--ok)}
+.filt button.prio.hay{background:var(--err-bg);color:var(--err)}
+.filt button.prio.hay.on{background:var(--err);color:#fff}
+.prioley{width:100%;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);margin-top:2px}
+.prioley span{display:inline-flex;align-items:center;gap:5px}
+.prioley i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.prioley i.r{background:var(--err)}.prioley i.n{background:#F2A51B}.prioley i.v{background:var(--ok)}
+.tonoprev{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+.tonoprev .q{color:var(--muted);font-size:12px;margin-bottom:4px}
+.tonoprev .a{background:#fff;border-radius:8px;padding:8px 10px;box-shadow:var(--sh-sm);white-space:pre-wrap}
 .conv .meta{flex:1;min-width:0}
 .conv .l1{display:flex;justify-content:space-between;gap:8px}
 .conv .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -213,6 +225,13 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
 .pop.emojis button{font-size:20px;padding:4px;border-radius:6px}
 .pop.emojis button:hover{background:var(--bg)}
 .pop.rapidas{left:60px;right:60px}
+.pop.imgs{left:52px;width:340px;padding:6px}
+.pop.imgs .iitem{display:flex;gap:10px;align-items:center;padding:6px;border-radius:8px;cursor:pointer;font-size:13px}
+.pop.imgs .iitem:hover{background:var(--verde-bg)}
+.pop.imgs .iitem img,.imgbot img{width:56px;height:56px;object-fit:cover;border-radius:6px;background:var(--bg);flex:none}
+.imgbot{display:flex;gap:12px;align-items:flex-start}
+.imgbot img{width:96px;height:96px;cursor:zoom-in}
+.imgbot .grow{display:flex;flex-direction:column;gap:6px}
 .pop.rapidas .ritem{padding:9px 12px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13px}
 .pop.rapidas .ritem:hover,.pop.rapidas .ritem.sel{background:var(--verde-bg)}
 .pop.rapidas .ritem b{color:var(--verde-700);margin-right:6px}
@@ -385,7 +404,7 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
             </div>
             <div class="convs" id="convs"><div class="empty-chat" style="padding:40px">Cargando…</div></div>
           </aside>
-          <section class="chat" id="chat"><div class="empty-chat"><b style="color:var(--ink)">Elegí una conversación</b><br>Las que esperan a una persona aparecen marcadas en amarillo.</div></section>
+          <section class="chat" id="chat"><div class="empty-chat"><b style="color:var(--ink)">Elegí una conversación</b><br>Usá el filtro Prioridad: en rojo los reclamos, en naranja los que piden una persona y en verde las ventas listas para cerrar.</div></section>
           <aside class="ficha closed" id="ficha"></aside>
         </div>
       </section>
@@ -449,14 +468,16 @@ function demoDb() {
     fielpet_usuarios: [yo, { email: 'martin@fielpet.com.ar', nombre: 'Martín', nombre_visible: 'Martín', rol: 'vendedor', activo: true }, { email: 'sofia@fielpet.com.ar', nombre: 'Sofía', nombre_visible: 'Sofía', rol: 'vendedor', activo: true }],
     fielpet_config: Object.entries({ bot_activo: 'true', mensaje_mantenimiento: 'Hola, gracias por escribir a FielPet. En este momento el asistente está en mantenimiento.', horario_dias: '1,2,3,4,5', horario_desde: '08:00', horario_hasta: '16:30',
       horas_nueva_charla: '6', segundos_agrupar: '6', avisar_toma: 'true', mensaje_toma: 'Hola {nombre}, te escribe {usuario}, del equipo de FielPet. Sigo yo con tu consulta.', devolver_bot_horas: '0',
-      cierre_por_defecto: 'true', mensaje_cierre: 'Damos por resuelta tu consulta. Si necesitás algo más, escribinos por acá.', mensaje_error: 'Perdón, no pude procesar tu mensaje. ¿Me lo repetís?', indicaciones_extra: '',
-      entorno: 'desarrollo', api_base_url: 'https://dapi.fielpet.com', codigo_vendedor: '', telefono_asistencias: '0800-999-0000', web: 'https://www.fielpet.com.ar', app_android: 'https://play.google.com/store/apps/details?id=com.ar.dawerbrokers.fielpet', app_ios: '', mail_atencion: '', link_baja: '' })
+      cierre_por_defecto: 'true', mensaje_cierre: 'Damos por resuelta tu consulta. Si necesitás algo más, escribinos por acá.', mensaje_error: 'Perdón, tuve un problema para responderte. Ya le avisé al equipo y una persona sigue con vos por acá lo antes posible.', indicaciones_extra: '',
+      entorno: 'desarrollo', api_base_url: 'https://dapi.fielpet.com', codigo_vendedor: '', telefono_asistencias: '0800-999-0000', web: 'https://www.fielpet.com.ar', app_android: 'https://play.google.com/store/apps/details?id=com.ar.dawerbrokers.fielpet', app_ios: '', mail_atencion: '', link_baja: '', imagenes_bot: JSON.stringify([{ clave: 'todos', corresponde: 'todos', nota: '', titulo: 'Todos los planes', media_path: 'demo/factura.png', mime: 'image/png', activo: true }]) })
       .map(([clave, valor]) => ({ clave, valor })),
     fielpet_bandeja: [
       { wa_id: '5493415550101', lead_id: 'L1', nombre: 'Ana Pérez', nombre_wa: 'Ana', estado: 'esperando', motivo: 'reclamo', ultimo_msg_at: hace(3), ultimo_msg_txt: '¿De qué mascota es y más o menos cuándo lo pediste?', ultimo_msg_emisor: 'bot', ultimo_cliente_at: hace(4), no_leidos: 2, etiquetas: ['reintegro'], estado_venta: 'cerrado' },
       { wa_id: '5491155550202', lead_id: 'L2', nombre: 'Julián Gómez', nombre_wa: 'Juli', estado: 'tomada', tomada_por: yo.email, ultimo_msg_at: hace(12), ultimo_msg_txt: 'Dale, pasame el link', ultimo_msg_emisor: 'cliente', ultimo_cliente_at: hace(12), no_leidos: 1, etiquetas: ['caliente'], estado_venta: 'listo_para_cerrar' },
       { wa_id: '5493515550303', lead_id: 'L3', nombre: null, nombre_wa: 'Mica 🐾', estado: 'bot', ultimo_msg_at: hace(40), ultimo_msg_txt: 'Bien. ¿Michi es de alguna raza o es mestizo?', ultimo_msg_emisor: 'bot', ultimo_cliente_at: hace(41), no_leidos: 0, etiquetas: [], estado_venta: 'asesorando' },
       { wa_id: '5492615550404', lead_id: 'L4', nombre: 'Roberto Díaz', nombre_wa: 'Roberto', estado: 'tomada', tomada_por: 'martin@fielpet.com.ar', ultimo_msg_at: hace(180), ultimo_msg_txt: 'Te paso el detalle del plan 3', ultimo_msg_emisor: 'vendedor', ultimo_cliente_at: hace(200), no_leidos: 0, etiquetas: [], estado_venta: 'cotizado' },
+      { wa_id: '5493416660606', lead_id: 'L6', nombre: 'Pedro Sosa', nombre_wa: 'Pedro', estado: 'esperando', motivo: 'asesor', ultimo_msg_at: hace(9), ultimo_msg_txt: 'Prefiero hablar con alguien antes de contratar', ultimo_msg_emisor: 'cliente', ultimo_cliente_at: hace(9), no_leidos: 1, etiquetas: [], estado_venta: 'cotizado' },
+      { wa_id: '5493416670707', lead_id: 'L7', nombre: 'Sol Martínez', nombre_wa: 'Sol', estado: 'bot', ultimo_msg_at: hace(22), ultimo_msg_txt: 'Te dejo el enlace para completar el alta de Milo.', ultimo_msg_emisor: 'bot', ultimo_cliente_at: hace(23), no_leidos: 0, etiquetas: [], estado_venta: 'listo_para_cerrar' },
       { wa_id: '5493425550505', lead_id: 'L5', nombre: 'Lucía Fernández', nombre_wa: 'Lu', estado: 'cerrada', ultimo_msg_at: hace(2000), ultimo_msg_txt: 'Damos por resuelta tu consulta.', ultimo_msg_emisor: 'vendedor', ultimo_cliente_at: hace(2100), no_leidos: 0, etiquetas: [], estado_venta: 'cerrado' },
     ],
     fielpet_mensajes: [], fielpet_eventos: [],
@@ -479,11 +500,12 @@ function demoDb() {
   const L = (id, wa, nombre_wa, estado, extra = {}) => T.fielpet_leads.push({ id, wa_id: wa, nombre_wa, estado, interes: extra.interes || null, necesidades: extra.necesidades || null, objeciones: null, resumen_vendedor: extra.resumen || null, etiquetas: (T.fielpet_bandeja.find((c) => c.wa_id === wa) || {}).etiquetas || [] });
   L('L1', '5493415550101', 'Ana', 'cerrado'); L('L2', '5491155550202', 'Juli', 'listo_para_cerrar', { interes: 'caliente', necesidades: 'Rocky es grande y le preocupan las cirugías.', resumen: 'Quiere el Plan 3 para Rocky.' });
   L('L3', '5493515550303', 'Mica 🐾', 'asesorando'); L('L4', '5492615550404', 'Roberto', 'cotizado'); L('L5', '5493425550505', 'Lu', 'cerrado');
+  L('L6', '5493416660606', 'Pedro', 'cotizado'); L('L7', '5493416670707', 'Sol', 'listo_para_cerrar');
   T.fielpet_personas.push(
     { id: 'P1', lead_id: 'L1', relacion: 'yo', nombre: 'Ana', apellido: 'Pérez', dni: '30111222', fecha_nacimiento: '1990-05-12', genero: 'F', email: 'ana@example.com', celular: '3415550101', direccion: 'Córdoba', numero: '1234', provincia: 'Santa Fe', localidad_id: 4568, localidad_nombre: 'ROSARIO', codigo_postal: '2000' },
     { id: 'P2', lead_id: 'L2', relacion: 'yo', nombre: 'Julián', apellido: 'Gómez', dni: '35999888', fecha_nacimiento: '1993-08-02', genero: 'M', email: 'julian@example.com', celular: '1155550202', direccion: 'Av. Rivadavia', numero: '5000', piso: '3', departamento: 'B', provincia: null, localidad_id: null, localidad_nombre: null },
     { id: 'P3', lead_id: 'L3', relacion: 'yo', celular: '3515550303' }, { id: 'P3b', lead_id: 'L3', relacion: 'mamá', nombre: 'Marta' },
-    { id: 'P4', lead_id: 'L4', relacion: 'yo', nombre: 'Roberto', apellido: 'Díaz', celular: '2615550404' }, { id: 'P5', lead_id: 'L5', relacion: 'yo', nombre: 'Lucía', apellido: 'Fernández', celular: '3425550505' });
+    { id: 'P4', lead_id: 'L4', relacion: 'yo', nombre: 'Roberto', apellido: 'Díaz', celular: '2615550404' }, { id: 'P6', lead_id: 'L6', relacion: 'yo', nombre: 'Pedro', apellido: 'Sosa', celular: '3416660606' }, { id: 'P7', lead_id: 'L7', relacion: 'yo', nombre: 'Sol', apellido: 'Martínez', celular: '3416670707' }, { id: 'P5', lead_id: 'L5', relacion: 'yo', nombre: 'Lucía', apellido: 'Fernández', celular: '3425550505' });
   T.fielpet_mascotas.push(
     { id: 'M1', lead_id: 'L1', titular_id: 'P1', nombre: 'Luna', animal: 'Perro', raza: 'Mestizo', sexo: 'H', color: 'Negra', fecha_nacimiento: '2022-03-01', fecha_aproximada: false, plan_elegido: 2, precio_mensual: 26216, estado: 'link_enviado' },
     { id: 'M2', lead_id: 'L2', titular_id: 'P2', nombre: 'Rocky', animal: 'Perro', raza: 'Labrador Retriever', sexo: 'M', color: 'Dorado', fecha_nacimiento: '2021-06-01', fecha_aproximada: true, plan_recomendado: 3, plan_elegido: 3, precio_mensual: 36970, enfermedades_previas: 'Displasia leve de cadera', estado: 'cotizada' },
@@ -514,6 +536,10 @@ function demoDb() {
   M('5493515550303', 40, 'bot', 'Bien. ¿Michi es de alguna raza o es mestizo?');
   M('5492615550404', 200, 'cliente', 'Cuánto sale el plan 3?');
   M('5492615550404', 180, 'vendedor', 'Te paso el detalle del plan 3', { usuario: 'martin@fielpet.com.ar' });
+  M('5493416660606', 10, 'bot', 'Para Toby, el Plan 3 te queda en $36.970 por mes.');
+  M('5493416660606', 9, 'cliente', 'Prefiero hablar con alguien antes de contratar');
+  M('5493416670707', 24, 'cliente', 'Dale, vamos con el plan 2 para Milo');
+  M('5493416670707', 22, 'bot', 'Te dejo el enlace para completar el alta de Milo.');
   M('5493425550505', 2100, 'cliente', 'Gracias, ya está');
   M('5493425550505', 2000, 'vendedor', 'Damos por resuelta tu consulta.', { usuario: 'martin@fielpet.com.ar' });
   T.fielpet_eventos.push({ id: 1, wa_id: '5491155550202', tipo: 'tomar', usuario: yo.email, creado: hace(31) }, { id: 2, wa_id: '5493415550101', tipo: 'derivada_por_bot', usuario: 'bot', detalle: { tipo: 'reclamo' }, creado: hace(5.7) });
@@ -607,6 +633,7 @@ const I = {
   clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>',
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
   clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>',
   smile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>',
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>',
@@ -797,28 +824,47 @@ async function loadConvs() {
   if (SEL) renderChatHead();
 }
 const esMia = (c) => c.estado === 'tomada' && String(c.tomada_por).toLowerCase() === ME.email.toLowerCase();
+// ---------- Prioridad: lo que nadie tomó y hay que atender primero ----------
+// rojo = reclamos, siniestros, reintegros, bajas y temas de una póliza · naranja = pide una persona u otra derivación · verde = venta lista para cerrar
+const MOTIVOS = { reclamo: 'Reclamo', siniestro: 'Siniestro', reintegro: 'Reintegro', baja: 'Baja', cambio_poliza: 'Cambio de póliza', poliza: 'Consulta de póliza', asesor: 'Pide una persona', consulta: 'Consulta', venta: 'Venta' };
+const MOTIVOS_URGENTES = ['reclamo', 'siniestro', 'reintegro', 'baja', 'cambio_poliza', 'poliza'];
+const PRIO = { urgente: 1, persona: 2, venta: 3 };
+function prioridad(c) {
+  if (!c || c.estado === 'cerrada' || c.estado === 'tomada') return null;
+  if (c.estado === 'esperando') return MOTIVOS_URGENTES.includes(String(c.motivo || '')) ? 'urgente' : 'persona';
+  if (c.estado_venta === 'listo_para_cerrar') return 'venta';
+  return null;
+}
+const esperaDesde = (c) => new Date(c.ultimo_cliente_at || c.ultimo_msg_at || 0).getTime();
 function chipEstado(c) {
   if (c.estado === 'tomada') return esMia(c) ? (c.derivada_por ? `<span class="chip mine">Te la pasó ${esc(nombreDe(c.derivada_por))}</span>` : '<span class="chip mine">Tomada por vos</span>') : `<span class="chip other">${esc(nombreDe(c.tomada_por))}</span>`;
-  if (c.estado === 'esperando') return `<span class="chip esp">Espera a una persona${c.motivo ? ' · ' + esc(String(c.motivo).replace('_', ' ')) : ''}</span>`;
+  if (c.estado === 'esperando') {
+    const m = MOTIVOS[c.motivo] || (c.motivo ? String(c.motivo).replace(/_/g, ' ') : 'Derivada');
+    return prioridad(c) === 'urgente' ? `<span class="chip err">● ${esc(m)} · sin tomar</span>` : `<span class="chip esp">● ${esc(m)} · sin tomar</span>`;
+  }
   if (c.estado === 'cerrada') return '<span class="chip closed">Cerrada</span>';
-  return '<span class="chip bot">Bot</span>';
+  return '<span class="chip bot">Bot</span>' + (prioridad(c) === 'venta' ? '<span class="chip ok">● Lista para cerrar</span>' : '');
 }
 function renderList() {
   const q = ($('q').value || '').toLowerCase().trim();
-  const cnt = { todas: CONVS.length, esperando: CONVS.filter((c) => c.estado === 'esperando').length, mias: CONVS.filter(esMia).length,
+  const cnt = { prioridad: CONVS.filter(prioridad).length, todas: CONVS.length, esperando: CONVS.filter((c) => c.estado === 'esperando').length, mias: CONVS.filter(esMia).length,
     bot: CONVS.filter((c) => c.estado === 'bot').length, tomadas: CONVS.filter((c) => c.estado === 'tomada').length, cerradas: CONVS.filter((c) => c.estado === 'cerrada').length };
-  const L = { todas: 'Todas', esperando: 'Esperando', mias: 'Mías', bot: 'Con el bot', tomadas: 'Tomadas', cerradas: 'Cerradas' };
-  $('filt').innerHTML = Object.keys(L).map((k) => `<button class="${FILTER === k ? 'on' : ''}" onclick="FILTER='${k}';renderList()">${L[k]} <b>${cnt[k]}</b></button>`).join('');
-  let lista = CONVS.filter((c) => FILTER === 'todas' || (FILTER === 'mias' ? esMia(c) : FILTER === 'tomadas' ? c.estado === 'tomada' : FILTER === 'cerradas' ? c.estado === 'cerrada' : c.estado === FILTER));
+  const L = { prioridad: 'Prioridad', todas: 'Todas', esperando: 'Esperando', mias: 'Mías', bot: 'Con el bot', tomadas: 'Tomadas', cerradas: 'Cerradas' };
+  const urg = CONVS.filter((c) => prioridad(c) === 'urgente').length;
+  $('filt').innerHTML = Object.keys(L).map((k) => `<button class="${FILTER === k ? 'on' : ''} ${k === 'prioridad' ? 'prio' + (urg ? ' hay' : '') : ''}" onclick="FILTER='${k}';renderList()">${L[k]} <b>${cnt[k]}</b></button>`).join('')
+    + (FILTER === 'prioridad' ? '<div class="prioley"><span><i class="r"></i>Reclamos, siniestros, reintegros y bajas</span><span><i class="n"></i>Piden una persona</span><span><i class="v"></i>Ventas listas para cerrar</span></div>' : '');
+  let lista = CONVS.filter((c) => FILTER === 'todas' || (FILTER === 'prioridad' ? !!prioridad(c) : FILTER === 'mias' ? esMia(c) : FILTER === 'tomadas' ? c.estado === 'tomada' : FILTER === 'cerradas' ? c.estado === 'cerrada' : c.estado === FILTER));
   if (q) lista = lista.filter((c) => (nombreConv(c) + ' ' + c.wa_id + ' ' + (c.ultimo_msg_txt || '') + ' ' + (c.etiquetas || []).join(' ')).toLowerCase().includes(q));
-  if (FILTER === 'todas') lista = [...lista].sort((a, b) => (b.estado === 'esperando') - (a.estado === 'esperando') || new Date(b.ultimo_msg_at || 0) - new Date(a.ultimo_msg_at || 0));
+  // Prioridad: primero las rojas, después las naranjas y las verdes; dentro de cada color, la que espera hace más tiempo arriba
+  if (FILTER === 'prioridad') lista = [...lista].sort((a, b) => PRIO[prioridad(a)] - PRIO[prioridad(b)] || esperaDesde(a) - esperaDesde(b));
+  else if (FILTER === 'todas') lista = [...lista].sort((a, b) => (PRIO[prioridad(a)] || 9) - (PRIO[prioridad(b)] || 9) || new Date(b.ultimo_msg_at || 0) - new Date(a.ultimo_msg_at || 0));
   const pend = cnt.esperando + CONVS.filter((c) => esMia(c) && c.no_leidos > 0).length;
   $('nb').textContent = pend; $('nb').classList.toggle('hidden', !pend);
   if (!lista.length) { $('convs').innerHTML = `<div class="empty-chat" style="padding:40px">${q ? 'Sin resultados.' : 'No hay conversaciones acá.'}</div>`; return; }
   $('convs').innerHTML = lista.map((c) => {
     const n = nombreConv(c);
     const pre = c.ultimo_msg_emisor === 'bot' ? 'Bot: ' : c.ultimo_msg_emisor === 'vendedor' ? 'Equipo: ' : '';
-    return `<div class="conv ${c.wa_id === SEL ? 'sel' : ''} ${c.no_leidos > 0 ? 'unread' : ''} ${c.estado === 'esperando' ? 'esp' : ''}" onclick="openConv('${c.wa_id}')">
+    return `<div class="conv ${c.wa_id === SEL ? 'sel' : ''} ${c.no_leidos > 0 ? 'unread' : ''} ${prioridad(c) ? 'p-' + prioridad(c) : ''}" onclick="openConv('${c.wa_id}')">
       <span class="avatar" style="background:${colorDe(c.wa_id)}">${esc(iniciales(n))}</span>
       <div class="meta"><div class="l1"><span class="nm">${esc(n)}</span><span class="tm">${cuando(c.ultimo_msg_at)}</span></div>
       <div class="l2"><span class="pv">${esc(pre + (c.ultimo_msg_txt || ''))}</span>${c.no_leidos > 0 ? `<span class="cnt">${c.no_leidos}</span>` : ''}</div>
@@ -959,7 +1005,9 @@ function renderBottom() {
     <div class="composer">
       <div class="pop emojis hidden" id="emojis"></div><div class="pop rapidas hidden" id="rapidas"></div>
       <button class="ibtn" title="Emojis" onclick="toggleEmojis()">${I.smile}</button>
+      <div class="pop imgs hidden" id="imgs"></div>
       <button class="ibtn" title="Adjuntar foto, video o documento" onclick="$('file').click()">${I.clip}</button>
+      ${imagenesBot().length ? `<button class="ibtn" title="Mandar una imagen de FielPet (planes, asistencias…)" onclick="toggleImgs()">${I.image}</button>` : ''}
       <input type="file" id="file" class="hidden" accept="image/jpeg,image/png,video/mp4,application/pdf,.doc,.docx,.xls,.xlsx,audio/ogg,audio/mpeg" onchange="pickFile(this)">
       <textarea id="txt" rows="1" placeholder="Escribí un mensaje (/ para respuestas rápidas)" onkeydown="txtKey(event)" oninput="txtInput(this)"></textarea>
       <button class="ibtn" id="btn-mic" title="Nota de voz" onclick="toggleRecord()">${I.mic}</button>
@@ -1462,7 +1510,7 @@ async function loadMetricas() {
 //  CONFIGURACIÓN
 // =====================================================================
 const PANES = [['bot', 'Bot', true], ['horario', 'Horario y feriados', true], ['mensajes', 'Mensajes del equipo', true], ['precios', 'Planes y precios', true],
-  ['conocimiento', 'Conocimiento del bot', true], ['asistencias', 'Asistencias', true], ['contacto', 'Contacto y links', true], ['rapidas', 'Respuestas rápidas', false],
+  ['conocimiento', 'Conocimiento del bot', true], ['imagenes', 'Imágenes del bot', true], ['asistencias', 'Asistencias', true], ['contacto', 'Contacto y links', true], ['rapidas', 'Respuestas rápidas', false],
   ['plantillas', 'Plantillas de WhatsApp', false], ['integracion', 'Integración FielPet', true], ['usuarios', 'Usuarios', true], ['cuenta', 'Mi cuenta', false]];
 let PANE = null;
 function renderConfig() {
@@ -1485,12 +1533,18 @@ const CFGP = {
     $('cfgpanes').innerHTML = `<div class="card"><h3>Estado del bot</h3><div class="desc">Si lo apagás, responde solo el mensaje de mantenimiento (uno cada 6 horas por persona). Las conversaciones tomadas por una persona siguen igual.</div>
       <div class="switchrow"><b>Bot activo</b>${tgl('b-act', CFG.bot_activo !== 'false')}</div>
       <label class="lbl">Mensaje de mantenimiento</label><textarea class="inp" id="b-mant">${cv('mensaje_mantenimiento')}</textarea>
-      <label class="lbl">Mensaje si algo falla</label><input class="inp" id="b-err" value="${cv('mensaje_error')}"></div>
+      <label class="lbl">Mensaje si algo falla</label><input class="inp" id="b-err" value="${cv('mensaje_error')}"><div class="hint">Se manda si el bot tiene un problema técnico al responder. La conversación pasa sola a "Espera a una persona" para que alguien la tome.</div></div>
+      <div class="card"><h3>Tono del bot</h3><div class="desc">Cómo escribe el bot. Las reglas de datos, precios y derivaciones no cambian.</div>
+      <div class="grid2"><div><label class="lbl">Estilo</label><select class="inp" id="b-tono" onchange="previewTono()">${[['cercano', 'Cercano: cálido y con energía'], ['intermedio', 'Intermedio: amable y profesional'], ['formal', 'Formal: sobrio, de aseguradora']].map(([v, l]) => `<option value="${v}" ${(CFG.bot_tono || 'intermedio') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div><label class="lbl">Emojis</label><select class="inp" id="b-emo" onchange="previewTono()">${[['no', 'No usar'], ['pocos', 'Pocos (uno cada tanto)'], ['si', 'Con naturalidad']].map(([v, l]) => `<option value="${v}" ${(CFG.bot_emojis || 'pocos') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div><label class="lbl">Largo de los mensajes</label><select class="inp" id="b-largo" onchange="previewTono()">${[['cortos', 'Muy cortos (1 o 2 oraciones)'], ['normales', 'Cortos (1 a 3 oraciones)'], ['explicativos', 'Un poco más explicativos']].map(([v, l]) => `<option value="${v}" ${(CFG.bot_largo || 'normales') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+      <div class="tonoprev" id="b-prev"></div></div>
       <div class="card"><h3>Indicaciones extra para el bot</h3><div class="desc">Texto libre que se suma a las instrucciones del bot. Sirve para ajustes puntuales (una promo vigente, algo que no tiene que decir, un cambio de tono). Escribilo como una indicación clara y corta. Lo que se contradiga con las reglas de privacidad o de datos del alta no se aplica.</div>
       <textarea class="inp" id="b-ind" rows="6" placeholder="Ejemplo: Este mes no menciones la guardería por vacaciones porque está en revisión.">${cv('indicaciones_extra')}</textarea></div>
       <div class="card"><h3>Ritmo de la charla</h3><div class="grid2"><div><label class="lbl">Segundos de espera antes de responder</label><input class="inp" id="b-seg" type="number" min="2" max="30" value="${cv('segundos_agrupar', 6)}"><div class="hint">Si la persona manda varios mensajes seguidos, el bot los responde juntos.</div></div>
       <div><label class="lbl">Horas para considerar una charla nueva</label><input class="inp" id="b-hrs" type="number" min="1" max="72" value="${cv('horas_nueva_charla', 6)}"><div class="hint">Después de ese tiempo el bot vuelve a saludar.</div></div></div></div>
-      <div class="savebar"><button class="btn" onclick="guardarCfg({bot_activo:$('b-act').checked,mensaje_mantenimiento:$('b-mant').value,mensaje_error:$('b-err').value,indicaciones_extra:$('b-ind').value,segundos_agrupar:Math.max(2,Math.min(30,+$('b-seg').value||6)),horas_nueva_charla:Math.max(1,+$('b-hrs').value||6)})">Guardar cambios</button></div>`;
+      <div class="savebar"><button class="btn" onclick="guardarCfg({bot_activo:$('b-act').checked,mensaje_mantenimiento:$('b-mant').value,mensaje_error:$('b-err').value,bot_tono:$('b-tono').value,bot_emojis:$('b-emo').value,bot_largo:$('b-largo').value,indicaciones_extra:$('b-ind').value,segundos_agrupar:Math.max(2,Math.min(30,+$('b-seg').value||6)),horas_nueva_charla:Math.max(1,+$('b-hrs').value||6)})">Guardar cambios</button></div>`;
+    previewTono();
   },
   async horario() {
     const fer = await db.sel('fielpet_feriados', { order: 'desde', desc: true }).catch(() => []);
@@ -1519,17 +1573,17 @@ const CFGP = {
     const [pl, pr] = await Promise.all([db.sel('fielpet_planes', { eq: { entorno: CFG.entorno || 'desarrollo' }, order: 'numero' }).catch(() => []), db.sel('fielpet_precios').catch(() => [])]);
     const P = {}; pr.forEach((x) => (P[x.numero_plan + '|' + x.franja] = x.precio));
     const FR = [['3m-10a', '3 meses a 10 años'], ['10a-13a', '10 a 13 años'], ['13a-18a', '13 a 18 años']];
+    const API = {}; pl.forEach((x) => { if (x.numero) API[x.numero] = x.costo; });
     const dif = pl.filter((x) => x.activo && x.numero && P[x.numero + '|3m-10a'] != null && Number(P[x.numero + '|3m-10a']) !== Number(x.costo));
     $('cfgpanes').innerHTML = `<div class="card"><h3>Planes en FielPet (${esc(CFG.entorno || 'desarrollo')})</h3><div class="desc">Se sincronizan solos cada hora desde la API de FielPet. No se editan acá.</div>
       ${dif.length ? `<div class="alert warn">El precio de la API no coincide con la primera franja en: ${dif.map((x) => esc(x.nombre) + ' (API ' + pesos(x.costo) + ')').join(', ')}. Revisá la tabla de abajo.</div>` : ''}
       <table class="tbl"><tr><th>Plan</th><th>id interno</th><th>Tope anual</th><th>Precio API</th><th>Estado</th><th>Sincronizado</th></tr>${pl.map((x) => `<tr><td><b>${esc(x.nombre)}</b></td><td>${x.id}</td><td>${pesos(x.suma_asegurada)}</td><td>${pesos(x.costo)}</td><td>${x.activo && x.visible ? '<span class="chip ok">Activo</span>' : '<span class="chip">Inactivo</span>'}</td><td>${esc(fechaHora(x.sincronizado))}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Todavía no se sincronizó. Corré el workflow "FielPet · Catálogos".</td></tr>'}</table></div>
-      <div class="card"><h3>Precio mensual por edad</h3><div class="desc">Lo usa el bot para cotizar. La API de FielPet trae un solo precio por plan; las otras franjas se cargan acá. Si una queda vacía, el bot no da precio para esa edad y deriva a un asesor.</div>
-      <table class="tbl"><tr><th>Plan</th>${FR.map((f) => `<th>${f[1]}</th>`).join('')}</tr>${[1, 2, 3, 4, 5].map((n) => `<tr><td><b>Plan ${n}</b></td>${FR.map((f) => `<td><input class="inp pr" data-k="${n}|${f[0]}" inputmode="numeric" value="${P[n + '|' + f[0]] ?? ''}" placeholder="-"></td>`).join('')}</tr>`).join('')}</table>
-      <div class="savebar"><button class="btn" onclick="guardarPrecios()">Guardar precios</button></div></div>`;
+      <div class="card"><h3>Precio mensual por edad</h3><div class="desc">Lo usa el bot para cotizar. Sale de la API de FielPet y se actualiza solo cada hora: no se edita acá. Por ahora la API trae solo el precio de 3 meses a 10 años; las otras franjas van a llegar con la API de producción. Mientras una franja esté vacía, el bot no da precio para esa edad y deriva a un vendedor.</div>
+      <table class="tbl"><tr><th>Plan</th>${FR.map((f) => `<th>${f[1]}</th>`).join('')}</tr>${[1, 2, 3, 4, 5].map((n) => `<tr><td><b>Plan ${n}</b></td>${FR.map((f) => { const v = f[0] === '3m-10a' ? (API[n] ?? P[n + '|' + f[0]]) : P[n + '|' + f[0]]; return v != null && v !== '' ? `<td><b>${pesos(v)}</b> <span class="chip ok">API</span></td>` : '<td class="muted">Todavía no viene en la API</td>'; }).join('')}</tr>`).join('')}</table></div>`;
   },
   async conocimiento() {
     const k = await db.sel('fielpet_conocimiento', { order: 'orden' }).catch(() => []);
-    const sec = k.filter((x) => x.tipo === 'seccion'), faq = k.filter((x) => x.tipo === 'faq');
+    const sec = k.filter((x) => x.tipo === 'seccion' && !esPlanK(x)), faq = k.filter((x) => x.tipo === 'faq');
     window._K = k;
     $('cfgpanes').innerHTML = `<div class="card"><h3>Lo que sabe el bot de FielPet</h3><div class="desc">El bot solo responde con lo que está acá. Escribilo como se lo explicarías a un vendedor nuevo: claro y con los números exactos. Los cambios se usan desde el próximo mensaje.</div>
       ${sec.map((s) => `<div class="kitem"><div class="kh"><input class="inp" id="k-t-${s.id}" value="${esc(s.titulo)}" style="font-weight:600">${tgl('k-a-' + s.id, s.activo)}</div><textarea class="inp" id="k-c-${s.id}" rows="4">${esc(s.contenido)}</textarea>
@@ -1538,6 +1592,20 @@ const CFGP = {
       <div class="kitem"><input class="inp" id="kn-t" placeholder="Pregunta"><textarea class="inp" id="kn-c" rows="3" placeholder="Respuesta" style="margin-top:6px"></textarea><div class="savebar" style="margin-top:6px"><button class="btn sm" onclick="agregarFaq()">Agregar pregunta</button></div></div>
       ${faq.map((s) => `<div class="kitem"><div class="kh"><input class="inp" id="k-t-${s.id}" value="${esc(s.titulo)}" style="font-weight:600">${tgl('k-a-' + s.id, s.activo)}</div><textarea class="inp" id="k-c-${s.id}" rows="3">${esc(s.contenido)}</textarea>
         <div class="savebar" style="margin-top:6px"><button class="btn sm ghost" onclick="borrarFila('fielpet_conocimiento',${s.id})">Borrar</button><button class="btn sm" onclick="guardarK(${s.id})">Guardar</button></div></div>`).join('')}</div>`;
+  },
+  async imagenes() {
+    const L = imagenesBot(true);
+    const fila = (x, i) => `<div class="kitem imgbot"><img id="ib-img-${i}" alt="" onclick="this.src && lightbox(this.src)">
+      <div class="grow"><div class="kh"><select class="inp" id="ib-k-${i}" style="font-weight:600">${opcionesCorresponde(correspondeDe(x))}</select>${tgl('ib-a-' + i, x.activo !== false)}</div>
+      <input class="inp" id="ib-n-${i}" value="${esc(x.nota || x.cuando || '')}" placeholder="Nota para el bot (opcional). Por ejemplo: mascotas de 10 a 13 años">
+      <div class="savebar" style="margin:0"><button class="btn sm ghost" onclick="borrarImagenBot(${i})">Borrar</button><button class="btn sm ghost" onclick="cambiarImagenBot(${i})">Cambiar imagen</button><button class="btn sm" onclick="guardarImagenesBot()">Guardar</button></div></div></div>`;
+    $('cfgpanes').innerHTML = `<div class="card"><h3>Imágenes que puede mandar el bot</h3><div class="desc">Subí cada imagen y elegí a qué corresponde. El bot manda la del plan cuando preguntan por ese plan, la de "Todos los planes" cuando preguntan por los planes en general o quieren comparar, y la de asistencias cuando preguntan por ellas. Los vendedores también las pueden mandar desde el chat con el botón de imagen. JPG o PNG, hasta 5 MB.<br><b>Ojo:</b> los precios que dice el bot salen siempre de la API. Si una imagen muestra precios, reemplazala cuando FielPet los cambie.</div>
+      <div class="kitem"><div class="grid2"><div><label class="lbl">Corresponde a</label><select class="inp" id="ibn-k">${opcionesCorresponde('todos')}</select></div><div><label class="lbl">Imagen</label><input class="inp" type="file" id="ibn-f" accept="image/jpeg,image/png"></div></div>
+      <label class="lbl">Nota para el bot (opcional)</label><input class="inp" id="ibn-n" placeholder="Solo si hace falta aclarar algo, por ejemplo: mascotas de 10 a 13 años">
+      <div class="savebar" style="margin-top:6px"><button class="btn sm" onclick="agregarImagenBot()">Agregar imagen</button></div></div>
+      ${L.map(fila).join('') || '<div class="muted">Todavía no hay imágenes.</div>'}</div>
+      <input type="file" id="ib-cambiar" class="hidden" accept="image/jpeg,image/png" onchange="subirCambioImagenBot(this)">`;
+    L.forEach(async (x, i) => { const u = await db.signed(x.media_path); const el = $('ib-img-' + i); if (el && u) el.src = u; });
   },
   async asistencias() {
     const a = await db.sel('fielpet_asistencias', { order: 'orden' }).catch(() => []);
@@ -1595,6 +1663,93 @@ const CFGP = {
       ${esAdmin() ? '' : `<div class="card"><h3>Avisos en este navegador</h3><div class="switchrow"><span>Sonido cuando llega un aviso</span>${tgl('m-son', ls('sonido') !== 'no')}</div><div class="switchrow"><span>Notificación del navegador</span>${tgl('m-not', ls('notif') === 'si')}</div><div class="savebar"><button class="btn" onclick="guardarAvisosNav()">Guardar</button></div></div>`}`;
   },
 };
+// ---------- Imágenes del bot: lista en fielpet_config.imagenes_bot (JSON), archivos en fielpet-media/panel/bot/ ----------
+function imagenesBot(todas) {
+  let l = []; try { l = JSON.parse(CFG.imagenes_bot || '[]'); } catch (e) { l = []; }
+  if (!Array.isArray(l)) l = [];
+  return todas ? l : l.filter((x) => x.activo !== false && x.media_path);
+}
+const CORRESPONDE = [['plan_1', 'Plan 1'], ['plan_2', 'Plan 2'], ['plan_3', 'Plan 3'], ['plan_4', 'Plan 4'], ['plan_5', 'Plan 5'], ['todos', 'Todos los planes'], ['asistencias', 'Asistencias'], ['otra', 'Otra']];
+const nombreCorresponde = (k) => (CORRESPONDE.find((x) => x[0] === k) || [k, 'Otra'])[1];
+const correspondeDe = (x) => (CORRESPONDE.some((c) => c[0] === x.corresponde) ? x.corresponde : 'otra');
+const opcionesCorresponde = (sel) => CORRESPONDE.map(([v, l]) => `<option value="${v}" ${v === sel ? 'selected' : ''}>${l}</option>`).join('');
+const tituloImg = (x) => nombreCorresponde(correspondeDe(x)) + (x.nota ? ' · ' + x.nota : '');
+// La clave es lo que escribe el bot para mandarla: plan_1, todos, asistencias… (con _2, _3 si hay más de una)
+const claveImg = (base, usadas) => { let k = base, n = 2; while (usadas.includes(k)) k = base + '_' + n++; return k; };
+function validarImagen(f) {
+  if (!f) { toast('Elegí la imagen.', true); return false; }
+  if (!/^image\/(jpeg|png)$/.test(f.type)) { toast('WhatsApp acepta imágenes JPG o PNG.', true); return false; }
+  if (f.size > 5 * 1048576) { toast('La imagen supera los 5 MB que permite WhatsApp.', true); return false; }
+  return true;
+}
+async function subirImagenBot(f) {
+  const safe = f.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]/g, '_').slice(-60);
+  const path = `panel/bot/${Date.now()}_${safe}`;
+  await db.upload(path, f); return path;
+}
+async function guardarListaImagenes(l) { await guardarCfg({ imagenes_bot: JSON.stringify(l) }); CFGP.imagenes(); }
+async function agregarImagenBot() {
+  const k = $('ibn-k').value, nota = $('ibn-n').value.trim(), f = $('ibn-f').files[0];
+  if (k === 'otra' && !nota) return toast('Para "Otra", escribí en la nota qué muestra la imagen.', true);
+  if (!validarImagen(f)) return;
+  try { const l = imagenesBot(true); const path = await subirImagenBot(f);
+    const x = { corresponde: k, nota, media_path: path, mime: f.type, activo: true };
+    l.push({ ...x, clave: claveImg(k, l.map((y) => y.clave)), titulo: tituloImg(x) });
+    await guardarListaImagenes(l); } catch (e) { toast('No se pudo subir: ' + e.message, true); }
+}
+async function guardarImagenesBot() {
+  const usadas = [];
+  const l = imagenesBot(true).map((x, i) => {
+    const y = { ...x, corresponde: $('ib-k-' + i).value, nota: $('ib-n-' + i).value.trim(), activo: $('ib-a-' + i).checked };
+    delete y.cuando; y.titulo = tituloImg(y);
+    y.clave = claveImg(y.corresponde, usadas); usadas.push(y.clave); return y;
+  });
+  if (l.some((x) => x.corresponde === 'otra' && !x.nota)) return toast('Para "Otra", escribí en la nota qué muestra la imagen.', true);
+  await guardarListaImagenes(l);
+}
+function borrarImagenBot(i) { confirmar('Borrar imagen', 'El bot y los vendedores ya no la van a poder mandar.', 'Borrar', async () => { const l = imagenesBot(true); l.splice(i, 1); await guardarListaImagenes(l); }, true); }
+let IMG_CAMBIO = null;
+function cambiarImagenBot(i) { IMG_CAMBIO = i; $('ib-cambiar').click(); }
+async function subirCambioImagenBot(inp) {
+  const f = inp.files[0]; inp.value = ''; if (IMG_CAMBIO === null || !validarImagen(f)) return;
+  try { const l = imagenesBot(true); l[IMG_CAMBIO] = { ...l[IMG_CAMBIO], media_path: await subirImagenBot(f), mime: f.type }; await guardarListaImagenes(l); } catch (e) { toast('No se pudo subir: ' + e.message, true); }
+}
+// En el chat: elegir una imagen y mandarla (usa lo que esté escrito como texto de la imagen)
+async function toggleImgs() {
+  const box = $('imgs'); if (!box) return;
+  if (!box.classList.contains('hidden')) return box.classList.add('hidden');
+  const l = imagenesBot();
+  box.innerHTML = l.map((x, i) => `<div class="iitem" onclick="mandarImagenBot(${i})"><img id="ic-img-${i}" alt=""><div><b>${esc(tituloImg(x))}</b></div></div>`).join('');
+  box.classList.remove('hidden');
+  l.forEach(async (x, i) => { const u = await db.signed(x.media_path); const el = $('ic-img-' + i); if (el && u) el.src = u; });
+}
+async function mandarImagenBot(i) {
+  const x = imagenesBot()[i]; const c = cur(); if (!x || !c || SENDING) return;
+  $('imgs').classList.add('hidden');
+  const t = $('txt'); const texto = t ? t.value.trim() : '';
+  SENDING = true;
+  try {
+    const r = await db.n8n('archivo', { wa_id: c.wa_id, media_path: x.media_path, media_categoria: 'imagen', media_mime: x.mime || 'image/png', media_nombre: tituloImg(x), texto });
+    if (r && r.ok) { if (t) { t.value = ''; txtInput(t); } } else toast(errTxt(r && (r.error_envio || r.error)), true);
+  } catch (e) { toast('No se pudo enviar: ' + e.message, true); }
+  SENDING = false; loadMsgs(true);
+}
+// Ejemplo orientativo de cada combinación (el bot no copia estos textos: le marcan el estilo)
+function previewTono() {
+  const el = $('b-prev'); if (!el) return;
+  const t = $('b-tono').value, e = $('b-emo').value, l = $('b-largo').value;
+  const base = {
+    cercano: ['¡Qué bueno! Luna está en una edad ideal para asegurarla.', '¿Es de alguna raza o es mestiza?'],
+    intermedio: ['Qué bueno, Luna está en una muy buena edad para asegurarla.', '¿Es de alguna raza o es mestiza?'],
+    formal: ['Gracias.', '¿Luna es de alguna raza o es mestiza?'],
+  }[t];
+  let primera = base[0], pregunta = base[1];
+  if (l === 'cortos' && t !== 'formal') { primera = primera.replace(/ Luna está en una (muy buena|edad ideal)[^.]*\./, ''); pregunta = '¿Luna es de alguna raza o es mestiza?'; }
+  const emoji = e === 'si' || (e === 'pocos' && t === 'cercano') ? ' 🐶' : '';
+  let txt = primera + emoji + ' ' + pregunta;
+  if (l === 'explicativos') txt += ' Te lo pregunto porque algunas razas tienen más tendencia a ciertos problemas de salud, y eso ayuda a elegir el plan.';
+  el.innerHTML = `<div class="q">Ejemplo. El cliente escribe: "tengo una perra, Luna, tiene 3 años"</div><div class="a">${esc(txt)}</div>`;
+}
 async function guardarMensajes() { guardarAvisosNav(true); await guardarCfg({ avisar_toma: $('m-av').checked, mensaje_toma: $('m-toma').value, devolver_bot_horas: Math.max(0, +$('m-dev').value || 0), cierre_por_defecto: $('m-cd').checked, mensaje_cierre: $('m-cie').value }); }
 async function guardarAvisosNav(silencio) {
   ls('sonido', $('m-son').checked ? 'si' : 'no');
@@ -1608,10 +1763,9 @@ async function agregarFeriado() {
   try { await db.ins('fielpet_feriados', { desde: d, hasta: h, motivo: $('f-m').value.trim() || null }); CFGP.horario(); } catch (e) { toast(e.message, true); }
 }
 function borrarFila(t, id) { confirmar('Borrar', 'Esto no se puede deshacer.', 'Borrar', async () => { try { await db.del(t, { id }); renderConfig(); } catch (e) { toast(e.message, true); } }, true); }
-async function guardarPrecios() {
-  const rows = [...document.querySelectorAll('.pr')].map((x) => { const [n, f] = x.dataset.k.split('|'); const val = String(x.value).replace(/\D/g, ''); return { numero_plan: +n, franja: f, precio: val ? +val : null, actualizado: new Date().toISOString() }; });
-  try { await db.ups('fielpet_precios', rows, 'numero_plan,franja'); toast('Precios guardados.'); CFGP.precios(); } catch (e) { toast(e.message, true); }
-}
+// El detalle de cada plan se guarda en fielpet_conocimiento con clave plan_1 … plan_5 (el bot lo lee de ahí)
+const esPlanK = (k) => /^plan_\d+$/.test(String(k.clave || '')) || /^Plan \d+$/.test(String(k.titulo || '').trim());
+const numPlanK = (k) => Number((String(k.clave || '').match(/^plan_(\d+)$/) || String(k.titulo || '').match(/^Plan (\d+)/) || [])[1] || 0);
 async function guardarK(id) { try { await db.upd('fielpet_conocimiento', { id }, { titulo: $('k-t-' + id).value.trim(), contenido: $('k-c-' + id).value.trim(), activo: $('k-a-' + id).checked, actualizado: new Date().toISOString() }); toast('Guardado.'); } catch (e) { toast(e.message, true); } }
 async function agregarFaq() {
   const t = $('kn-t').value.trim(), c = $('kn-c').value.trim(); if (!t || !c) return toast('Completá la pregunta y la respuesta.', true);
