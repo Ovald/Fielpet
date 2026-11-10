@@ -613,8 +613,8 @@ function demoDb() {
           m.estado = 'link_enviado'; msg(x.wa_id, 'vendedor', 'Te paso el enlace para completar el alta de ' + m.nombre + '. Vence en 24 horas.\n\n[enlace de alta]'); ev(x.wa_id, 'enlace', { estado: 'vigente' });
           return { ok: true, estado: 'vigente' }; }
         case 'plantillas': return { ok: true, plantillas: [
-          { nombre: 'fielpet_retomar_consulta', idioma: 'es_AR', estado: 'APPROVED', categoria: 'UTILITY', texto: 'Hola {{1}}, te escribimos de FielPet por tu consulta del {{2}}. ¿Seguimos por acá?', variables: 2, botones: [] },
-          { nombre: 'fielpet_enlace_vencido', idioma: 'es_AR', estado: 'PENDING', categoria: 'UTILITY', texto: 'Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.', variables: 2, botones: ['Sí, generar otro', 'Ahora no'] }] };
+          { nombre: 'fielpet_retomar_consulta', idioma: 'es_AR', estado: 'APPROVED', categoria: 'UTILITY', texto: 'Hola {{1}}, te escribimos de FielPet por la consulta que nos hiciste el {{2}}. Si te quedó alguna duda o querés avanzar, respondé este mensaje y te ayudamos.', variables: 2, botones: [] },
+          { nombre: 'fielpet_enlace_vencido', idioma: 'es_AR', estado: 'PENDING', categoria: 'UTILITY', texto: 'Hola {{1}}, el enlace para completar el alta de {{2}} venció. ¿Querés que te generemos uno nuevo?', variables: 2, botones: ['Sí, generar otro', 'Ahora no'] }] };
         case 'usuario': T.fielpet_usuarios.push({ email: x.nuevo.email, nombre: x.nuevo.nombre, nombre_visible: x.nuevo.nombre, rol: x.nuevo.rol, activo: true }); return { ok: true };
       }
       return { ok: false, error: 'accion_invalida' };
@@ -1616,14 +1616,14 @@ const CFGP = {
   async precios() {
     const [pl, pr] = await Promise.all([db.sel('fielpet_planes', { eq: { entorno: CFG.entorno || 'desarrollo' }, order: 'numero' }).catch(() => []), db.sel('fielpet_precios').catch(() => [])]);
     const P = {}; pr.forEach((x) => (P[x.numero_plan + '|' + x.franja] = x.precio));
-    const FR = [['3m-10a', '3 meses a 10 años'], ['10a-13a', '10 a 13 años'], ['13a-18a', '13 a 18 años']];
+    const FR = [['3m-10a', 'Hasta 9 años'], ['10a-13a', '10 a 12 años'], ['13a-18a', '13 a 18 años']];
     const API = {}; pl.forEach((x) => { if (x.numero) API[x.numero] = x.costo; });
     const dif = pl.filter((x) => x.activo && x.numero && P[x.numero + '|3m-10a'] != null && Number(P[x.numero + '|3m-10a']) !== Number(x.costo));
     $('cfgpanes').innerHTML = `<div class="card"><h3>Planes en FielPet (${esc(CFG.entorno || 'desarrollo')})</h3><div class="desc">Se sincronizan solos cada hora desde la API de FielPet. No se editan acá.</div>
       ${dif.length ? `<div class="alert warn">El precio de la API no coincide con la primera franja en: ${dif.map((x) => esc(x.nombre) + ' (API ' + pesos(x.costo) + ')').join(', ')}. Revisá la tabla de abajo.</div>` : ''}
       <table class="tbl"><tr><th>Plan</th><th>id interno</th><th>Tope anual</th><th>Precio API</th><th>Estado</th><th>Sincronizado</th></tr>${pl.map((x) => `<tr><td><b>${esc(x.nombre)}</b></td><td>${x.id}</td><td>${pesos(x.suma_asegurada)}</td><td>${pesos(x.costo)}</td><td>${x.activo && x.visible ? '<span class="chip ok">Activo</span>' : '<span class="chip">Inactivo</span>'}</td><td>${esc(fechaHora(x.sincronizado))}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Todavía no se sincronizó. Corré el workflow "FielPet · Catálogos".</td></tr>'}</table></div>
-      <div class="card"><h3>Precio mensual por edad</h3><div class="desc">Lo usa el bot para cotizar. Sale de la API de FielPet y se actualiza solo cada hora: no se edita acá. Por ahora la API trae solo el precio de 3 meses a 10 años; las otras franjas van a llegar con la API de producción. Mientras una franja esté vacía, el bot no da precio para esa edad y deriva a un vendedor.</div>
-      <table class="tbl"><tr><th>Plan</th>${FR.map((f) => `<th>${f[1]}</th>`).join('')}</tr>${[1, 2, 3, 4, 5].map((n) => `<tr><td><b>Plan ${n}</b></td>${FR.map((f) => { const v = f[0] === '3m-10a' ? (API[n] ?? P[n + '|' + f[0]]) : P[n + '|' + f[0]]; return v != null && v !== '' ? `<td><b>${pesos(v)}</b> <span class="chip ok">API</span></td>` : '<td class="muted">Todavía no viene en la API</td>'; }).join('')}</tr>`).join('')}</table></div>`;
+      <div class="card"><h3>Precio mensual por edad</h3><div class="desc">Lo usa el bot para cotizar y para el resumen del enlace de alta. Sale del cálculo por edad del portal de FielPet y se actualiza solo cada hora: no se edita acá. Si una franja quedara vacía, el bot no da precio para esa edad y deriva a un vendedor.</div>
+      <table class="tbl"><tr><th>Plan</th>${FR.map((f) => `<th>${f[1]}</th>`).join('')}</tr>${[1, 2, 3, 4, 5].map((n) => `<tr><td><b>Plan ${n}</b></td>${FR.map((f) => { const v = f[0] === '3m-10a' ? (API[n] ?? P[n + '|' + f[0]]) : P[n + '|' + f[0]]; return v != null && v !== '' ? `<td><b>${pesos(v)}</b> <span class="chip ok">FielPet</span></td>` : '<td class="muted">Sin precio todavía</td>'; }).join('')}</tr>`).join('')}</table></div>`;
   },
   async conocimiento() {
     const k = await db.sel('fielpet_conocimiento', { order: 'orden' }).catch(() => []);
@@ -1680,8 +1680,8 @@ const CFGP = {
       ${r && r.ok ? '' : `<div class="alert warn">${esc(errTxt(r && r.error))}</div>`}
       ${l.map((p) => `<div class="tplcard"><div class="row"><b class="grow">${esc(p.nombre)}</b><span class="chip">${esc(p.categoria)}</span><span class="chip">${esc(p.idioma)}</span><span class="chip ${(EST[p.estado] || ['', ''])[1]}">${esc((EST[p.estado] || [p.estado])[0])}</span></div><pre>${esc(p.texto)}${p.botones && p.botones.length ? '\n\n[ ' + p.botones.map(esc).join(' ]  [ ') + ' ]' : ''}</pre></div>`).join('') || '<div class="muted">No hay plantillas en la cuenta.</div>'}</div>
       ${esAdmin() ? `<div class="card"><h3>Plantillas sugeridas para crear</h3><div class="desc">Categoría Utilidad, idioma Español (ARG).</div>
-      <div class="tplcard"><b>fielpet_retomar_consulta</b><pre>Hola {{1}}, te escribimos de FielPet por tu consulta del {{2}}. ¿Seguimos por acá?</pre></div>
-      <div class="tplcard"><b>fielpet_enlace_vencido</b> · botones de respuesta rápida "Sí, generar otro" y "Ahora no"<pre>Hola {{1}}, el enlace para completar el alta de {{2}} venció. Si querés, te generamos uno nuevo.</pre></div>
+      <div class="tplcard"><b>fielpet_retomar_consulta</b><pre>Hola {{1}}, te escribimos de FielPet por la consulta que nos hiciste el {{2}}. Si te quedó alguna duda o querés avanzar, respondé este mensaje y te ayudamos.</pre></div>
+      <div class="tplcard"><b>fielpet_enlace_vencido</b> · botones de respuesta rápida "Sí, generar otro" y "Ahora no"<pre>Hola {{1}}, el enlace para completar el alta de {{2}} venció. ¿Querés que te generemos uno nuevo?</pre></div>
       <div class="tplcard"><b>fielpet_primer_contacto</b> · para "Nueva conversación"<pre>Hola {{1}}, te escribimos de FielPet por la consulta que hiciste sobre la cobertura para tu mascota. ¿Te podemos ayudar por acá?</pre></div></div>` : ''}`;
   },
   integracion() {
