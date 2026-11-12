@@ -877,6 +877,7 @@ function renderList() {
 }
 const cur = () => CONVS.find((c) => c.wa_id === SEL);
 async function openConv(wa) {
+  guardarBorrador();
   SEL = wa; REPLY = null; PENDING = null;
   document.body.classList.add('chat-open');
   if (window.innerWidth <= 860) FICHA_OPEN = false;
@@ -1024,8 +1025,19 @@ async function hidratarMedia(box) {
 function lightbox(url) { $('modal-root').innerHTML = `<div class="lightbox" onclick="closeModal()"><img src="${url}"></div>`; }
 
 // ---------- abajo: composer o aviso ----------
+// Borradores por conversación: lo escrito en el cuadro no se pierde si la parte de abajo se vuelve a dibujar
+// (llega un mensaje, el bot o el sistema actualizan la conversación, o se cambia de chat y se vuelve).
+const DRAFTS = {};
+function guardarBorrador() { const t = $('txt'), b = $('bottom'); if (t && b && b.dataset.wa) DRAFTS[b.dataset.wa] = t.value; }
 function renderBottom() {
   const c = cur(); const b = $('bottom'); if (!c || !b) return;
+  // Solo se redibuja si cambió lo que hay que mostrar (aviso, ventana cerrada o cuadro para escribir).
+  // Antes se redibujaba con cada actualización de la conversación y se borraba lo que estabas escribiendo.
+  const modo = !esMia(c) ? 'lock|' + c.estado + '|' + (c.tomada_por || '') + '|' + (esAdmin() ? 1 : 0) : !ventana().abierta ? 'cerrada' : 'composer|' + (imagenesBot().length ? 1 : 0);
+  const key = c.wa_id + '|' + modo;
+  if (b.dataset.key === key && b.firstElementChild) { if (modo.startsWith('composer')) { renderReply(); renderPending(); } return; }
+  guardarBorrador();
+  b.dataset.key = key; b.dataset.wa = c.wa_id;
   if (!esMia(c)) {
     const txt = c.estado === 'tomada' ? `La está atendiendo ${esc(nombreDe(c.tomada_por))}.` : c.estado === 'esperando' ? 'El bot la derivó y espera a una persona. Tomala para responder.' : 'El bot está atendiendo. Si la tomás, el bot deja de responder.';
     b.innerHTML = `<div class="lockbar"><span>${txt}</span>${c.estado === 'tomada' && !esAdmin() ? '' : `<button class="btn sm" onclick="tomar()">Tomar conversación</button>`}</div>`;
@@ -1045,6 +1057,7 @@ function renderBottom() {
       <button class="ibtn" id="btn-mic" title="Nota de voz" onclick="toggleRecord()">${I.mic}</button>
       <button class="ibtn" id="btn-send" title="Enviar" onclick="enviar()" style="color:var(--verde)">${I.send}</button>
     </div>`;
+  const t = $('txt'); if (t && DRAFTS[c.wa_id]) { t.value = DRAFTS[c.wa_id]; txtInput(t); }
   renderReply(); renderPending();
 }
 function responderA(id) { const m = MSGS.find((x) => x.id === id); if (!m || !esMia(cur())) return toast('Tomá la conversación para responder.', true); REPLY = m; renderReply(); $('txt') && $('txt').focus(); }
@@ -1113,7 +1126,7 @@ async function enviar() {
   const archivo = PENDING, respuesta = REPLY, wa = c.wa_id;
   const tmp = { id: 'tmp-' + (++TMP_ID), wa_id: wa, emisor: 'vendedor', usuario: ME.email, creado: new Date().toISOString(), estado_envio: 'enviando',
     tipo: 'texto', texto: archivo ? ('📎 ' + archivo.nombre + (texto ? '\n' + texto : '') + ' · enviando…') : texto, respuesta_a: respuesta ? respuesta.wamid : null };
-  if (t) { t.value = ''; txtInput(t); } PENDING = null; REPLY = null; renderPending(); renderReply();
+  if (t) { t.value = ''; txtInput(t); } DRAFTS[wa] = ''; PENDING = null; REPLY = null; renderPending(); renderReply();
   TMPS.push(tmp);
   if (SEL === wa) { MSGS.push(tmp); renderMsgs(); const b = $('msgs'); if (b) b.scrollTop = b.scrollHeight; }
   COLA_ENVIO = COLA_ENVIO.then(async () => {
@@ -1286,15 +1299,16 @@ async function loadFicha() {
   const wa = SEL;
   const lead = (await db.sel('fielpet_leads', { eq: { wa_id: wa } }))[0];
   if (!lead) { FICHA = null; $('ficha').innerHTML = ''; return; }
-  const [personas, mascotas, gestiones, notas, pedidos] = await Promise.all([
+  const [personas, mascotas, gestiones, notas, pedidos, precios] = await Promise.all([
     db.sel('fielpet_personas', { eq: { lead_id: lead.id }, order: 'creado' }),
     db.sel('fielpet_mascotas', { eq: { lead_id: lead.id }, order: 'creado' }),
     db.sel('fielpet_gestiones', { eq: { lead_id: lead.id }, order: 'creado', desc: true, limit: 20 }),
     db.sel('fielpet_notas', { eq: { wa_id: wa }, order: 'creado', desc: true, limit: 30 }),
     db.sel('fielpet_pedidos_panel', { eq: { wa_id: wa }, order: 'creado', desc: true, limit: 20 }).catch(() => []),
+    db.sel('fielpet_precios').catch(() => []),
   ]);
   if (wa !== SEL) return;
-  FICHA = { lead, personas, mascotas, gestiones, notas, pedidos };
+  FICHA = { lead, personas, mascotas, gestiones, notas, pedidos, precios };
   renderFicha();
 }
 const v = (x) => (x === null || x === undefined || x === '' ? '<span class="falta">falta</span>' : esc(x));
@@ -1308,6 +1322,18 @@ function kvPersona(p) {
 const EST_VENTA = { nuevo: 'Nuevo', asesorando: 'Asesorando', cotizado: 'Cotizado', listo_para_cerrar: 'Listo para cerrar', derivado: 'Derivado', cerrado: 'Cerrado', perdido: 'Perdido' };
 const EST_MASCOTA = { en_charla: 'En charla', cotizada: 'Cotizada', link_enviado: 'Enlace enviado', derivada: 'Derivada', no_avanza: 'No avanza' };
 const EST_PEDIDO = { vigente: ['Vigente', 'ok'], vencido: ['Vencido', ''], conflicto: ['Ya usado', 'mine'], rechazado: ['Rechazado', 'err'], error: ['Falló', 'err'], no_autorizado: ['Falló', 'err'], preparado: ['Sin respuesta', 'esp'] };
+// Precio por mes del plan elegido según la edad de la mascota (tabla fielpet_precios, la misma que usa el bot).
+// Si no hay precio para esa franja, queda el que guardó el bot al cotizar.
+function precioMascota(m, precios) {
+  const fn = m.fecha_nacimiento ? new Date(String(m.fecha_nacimiento).slice(0, 10) + 'T12:00:00') : null;
+  if (!fn || isNaN(fn)) return m.precio_mensual;
+  const hoy = new Date();
+  let anios = hoy.getFullYear() - fn.getFullYear();
+  if (hoy.getMonth() < fn.getMonth() || (hoy.getMonth() === fn.getMonth() && hoy.getDate() < fn.getDate())) anios--;
+  const franja = anios < 10 ? '3m-10a' : anios < 13 ? '10a-13a' : '13a-18a';
+  const x = (precios || []).find((p) => Number(p.numero_plan) === Number(m.plan_elegido) && p.franja === franja);
+  return x && x.precio !== null && x.precio !== undefined ? x.precio : m.precio_mensual;
+}
 function chipPedido(e) { const x = EST_PEDIDO[e] || [e, '']; return `<span class="chip ${x[1]}">${esc(x[0])}</span>`; }
 function renderFicha() {
   const f = FICHA; const el = $('ficha'); el.classList.toggle('closed', !FICHA_OPEN);
@@ -1329,7 +1355,7 @@ function renderFicha() {
           <div class="kv"><span class="k">Animal</span><span class="v">${v(m.animal)}</span><span class="k">Raza</span><span class="v">${m.raza ? esc(m.raza) : m.raza_dicha ? '<span class="falta">"' + esc(m.raza_dicha) + '" (sin confirmar)</span>' : v(null)}</span>
           <span class="k">Sexo</span><span class="v">${v(m.sexo === 'M' ? 'Macho' : m.sexo === 'H' ? 'Hembra' : '')}</span><span class="k">Color</span><span class="v">${v(m.color)}</span>
           <span class="k">Nacimiento</span><span class="v">${m.fecha_nacimiento ? esc(fechaDMA(m.fecha_nacimiento)) + (m.fecha_aproximada ? ' (aprox.)' : '') : v(null)}</span>
-          <span class="k">Plan</span><span class="v">${m.plan_elegido ? 'Plan ' + m.plan_elegido + ' · ' + pesos(m.precio_mensual) + '/mes' : m.plan_recomendado ? 'Recomendado: Plan ' + m.plan_recomendado : '-'}</span>
+          <span class="k">Plan</span><span class="v">${m.plan_elegido ? 'Plan ' + m.plan_elegido + ' · ' + pesos(precioMascota(m, f.precios)) + '/mes' : m.plan_recomendado ? 'Recomendado: Plan ' + m.plan_recomendado : '-'}</span>
           ${m.enfermedades_previas ? `<span class="k">Antecedentes</span><span class="v">${esc(m.enfermedades_previas)}</span>` : ''}
           ${tit && tit.relacion !== 'yo' ? `<span class="k">Titular</span><span class="v">${esc(tit.relacion)}</span>` : ''}</div>
           ${ped ? `<div class="ped">Enlace ${chipPedido(ped.estado_actual)} ${ped.expires_at && ped.estado_actual === 'vigente' ? 'vence ' + esc(fechaHora(ped.expires_at)) : ''} · ${ped.creado_por === 'bot' ? 'lo generó el bot' : 'lo generó ' + esc(nombreDe(ped.creado_por))}</div>` : ''}
