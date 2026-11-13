@@ -209,6 +209,13 @@ label.lbl{display:block;font-size:12px;font-weight:600;color:var(--body);margin:
 .m .doc .dn b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
 .m .doc .dn small{font-size:11px;color:var(--muted)}
 .m .loading{width:220px;height:120px;border-radius:7px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin-bottom:3px}
+.m .enl{margin-top:8px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px}
+.m .enl .enl-h{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--ink)}
+.m .enl .enl-h .tag{font-weight:600;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
+.m .enl .enl-h .tag.venc{background:var(--err-bg);color:var(--err)}
+.m .enl .enl-u{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--body);background:var(--bg);border-radius:6px;padding:5px 7px;margin:6px 0;word-break:break-all;user-select:all}
+.m .enl .enl-f{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.m .enl .enl-w{color:var(--warn);font-size:11.5px}
 .m .quote{border-left:3px solid var(--verde);background:rgba(0,0,0,.04);border-radius:5px;padding:4px 8px;font-size:12px;color:var(--body);margin-bottom:4px}
 .m .tpl{font-size:10.5px;font-weight:700;color:var(--info);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
 .m .rep{position:absolute;top:4px;right:-30px;opacity:0;transition:.15s}
@@ -610,7 +617,7 @@ function demoDb() {
           const faltan = [!p.dni && 'DNI del titular', !p.email && 'email del titular', !p.localidad_id && 'localidad (usá buscar_localidad)', !m.raza && 'raza de la mascota (del catálogo, o Mestizo)', !m.fecha_nacimiento && 'fecha de nacimiento o edad de la mascota'].filter(Boolean);
           if (faltan.length) return { ok: false, error: 'faltan_datos', faltan };
           T.fielpet_pedidos_panel.unshift({ request_id: 'c' + Date.now(), creado: new Date().toISOString(), estado: 'vigente', estado_actual: 'vigente', expires_at: new Date(Date.now() + 864e5).toISOString(), creado_por: yo.email, intentos: 1, entorno: 'desarrollo', wa_id: x.wa_id, cliente: [p.nombre, p.apellido].join(' '), mascota: m.nombre, animal: m.animal, plan_elegido: m.plan_elegido });
-          m.estado = 'link_enviado'; msg(x.wa_id, 'vendedor', 'Te paso el enlace para completar el alta de ' + m.nombre + '. Vence en 24 horas.\n\n[enlace de alta]'); ev(x.wa_id, 'enlace', { estado: 'vigente' });
+          m.estado = 'link_enviado'; msg(x.wa_id, 'vendedor', 'Te paso el enlace para completar el alta de ' + m.nombre + '. Vence en 24 horas.\n\n[enlace de alta: botón Completar alta]', { extra: { enlace: true, boton: true, mascota: m.nombre, enlace_url: 'https://web.fielpet.com/contratar/continuar?token=demo' + Math.random().toString(36).slice(2, 12) } }); ev(x.wa_id, 'enlace', { estado: 'vigente' });
           return { ok: true, estado: 'vigente' }; }
         case 'plantillas': return { ok: true, plantillas: [
           { nombre: 'fielpet_retomar_consulta', idioma: 'es_AR', estado: 'APPROVED', categoria: 'UTILITY', texto: 'Hola {{1}}, te escribimos de FielPet por la consulta que nos hiciste el {{2}}. Si te quedó alguna duda o querés avanzar, respondé este mensaje y te ayudamos.', variables: 2, botones: [] },
@@ -991,10 +998,32 @@ function burbuja(m) {
   } else if (m.tipo === 'ubicacion') {
     const x = m.extra || {};
     cuerpo += `<a href="https://maps.google.com/?q=${x.lat},${x.lng}" target="_blank" rel="noopener">${I.pin} ${esc(m.texto || 'Ver ubicación')}</a>`;
+  } else if (m.extra && m.extra.enlace_url) {
+    // Mensaje con el enlace de alta: se muestra el link (sin abrirse al hacer clic) con un botón para copiarlo
+    cuerpo += linkify(String(m.texto || '').replace(/\n*\[enlace de alta[^\]]*\]\s*$/, ''));
+    cuerpo += cajaEnlace(m);
   } else cuerpo += linkify(m.texto || '');
   const st = m.tipo === 'sticker' && m.media_path ? ' sticker' : '';
   const rep = m.emisor === 'cliente' && m.wamid ? `<button class="ibtn rep" title="Responder a este mensaje" onclick="responderA(${m.id})">${I.reply}</button>` : '';
   return `<div class="m ${cls}${st}">${rep}${who}${cuerpo}<div class="ft">${hora(m.creado)} ${ticks(m)}</div>${m.estado_envio === 'fallido' && m.error_envio ? `<div class="err">${esc(m.error_envio)}</div>` : ''}</div>`;
+}
+// Enlace de alta dentro del chat: vence 24 horas después del envío. No es clickeable: es de un solo uso
+function cajaEnlace(m) {
+  const url = String(m.extra.enlace_url || '');
+  const vence = new Date(new Date(m.creado).getTime() + 24 * 3600 * 1000);
+  const vigente = vence > new Date();
+  const corto = url.length > 70 ? url.slice(0, 45) + '…' + url.slice(-18) : url;
+  const fecha = vence.toLocaleString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return `<div class="enl"><div class="enl-h">🔗 Enlace de alta${m.extra.mascota ? ' de ' + esc(m.extra.mascota) : ''} <span class="tag${vigente ? '' : ' venc'}">${vigente ? 'Vigente hasta ' + esc(fecha) : 'Vencido'}</span></div>`
+    + `<div class="enl-u" title="${esc(url)}">${esc(corto)}</div>`
+    + `<div class="enl-f"><span class="enl-w">No lo abras: es de un solo uso y el cliente lo encontraría vacío.</span>`
+    + `<button class="btn sm ghost" onclick="copiarEnlace(${m.id})">Copiar enlace</button></div></div>`;
+}
+async function copiarEnlace(id) {
+  const m = MSGS.find((x) => x.id === id); const url = m && m.extra && m.extra.enlace_url;
+  if (!url) return toast('No se encontró el enlace', true);
+  try { await navigator.clipboard.writeText(url); toast('Enlace copiado. Pegalo solo para mandárselo al cliente.'); }
+  catch (e) { toast('No se pudo copiar. Seleccioná el enlace y copialo a mano.', true); }
 }
 // Al darle play a un audio o video, se pausa el que estaba sonando (los GIF, que no tienen controles, siguen)
 document.addEventListener('play', (ev) => {
